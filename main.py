@@ -59,5 +59,14 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
+@app.post("/users/login", response_model=schemas.User)
+def read_user(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_username(db, username=username)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if db_user.password != password:
+        raise HTTPException(status_code=250, detail="Password not correct")
+    return db_user
+
 if __name__ == "__main__":
     uvicorn.run(app="main:app", host="0.0.0.0", port=8123, reload=True)
