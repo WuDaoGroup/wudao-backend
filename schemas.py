@@ -7,3 +7,8 @@ class User(BaseModel):
     usertype: int
     class Config:
         orm_mode = True
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    usertype: int
