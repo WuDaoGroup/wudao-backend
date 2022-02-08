@@ -72,5 +72,17 @@ def login(username: str = Form(...), password: str = Form(...), db: Session = De
         raise HTTPException(status_code=250, detail="Password not correct")
     return db_user
 
+@app.post("/users/register", response_model=schemas.UserCreate)
+def register(username: str = Form(...), password1: str = Form(...),password2: str = Form(...), db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_username(db, username=username)
+    if db_user is not None:
+        raise HTTPException(status_code=404, detail="User already registered")
+    if password1 != password2:
+        raise HTTPException(status_code=250, detail="密码不同")
+    new_user = schemas.UserCreate(username=username, password=password1, usertype=0)
+    crud.create_user(db,new_user)
+    return new_user
+
+
 if __name__ == "__main__":
     uvicorn.run(app="main:app", host="127.0.0.1", port=8123, reload=True)
