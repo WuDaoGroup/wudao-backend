@@ -78,7 +78,7 @@ def register(username: str = Form(...), password1: str = Form(...),password2: st
     if db_user is not None:
         raise HTTPException(status_code=250, detail="User already registered")
     if password1 != password2:
-        raise HTTPException(status_code=251, detail="密码不同")
+        raise HTTPException(status_code=251, detail="Passwords are not the same")
     new_user = schemas.UserCreate(username=username, password=password1, usertype=0)
     crud.create_user(db,new_user)
     return new_user
