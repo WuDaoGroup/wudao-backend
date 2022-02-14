@@ -85,4 +85,4 @@ def register(username: str = Form(...), password1: str = Form(...),password2: st
 
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="127.0.0.1", port=8123, reload=True)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8123, reload=True)
