@@ -1,3 +1,3 @@
 # wudao-backend
 
-- Powerd by FastAPI
+- Powered by FastAPI, postgresql
