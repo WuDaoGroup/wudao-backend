@@ -101,4 +101,4 @@ async def create_upload_file(upload_file: UploadFile = File(...)):
     return {"info": f"file '{upload_file.filename}' saved at '{file_location}'"}
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="127.0.0.1", port=8123, reload=True)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8123, reload=True)
