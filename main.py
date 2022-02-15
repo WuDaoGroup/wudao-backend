@@ -1,10 +1,14 @@
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, Form
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from pandas.api.types import CategoricalDtype
+from io import StringIO
 
 import crud, models, schemas
+import pandas as pd
+import numpy as np
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -83,6 +87,18 @@ def register(username: str = Form(...), password1: str = Form(...),password2: st
     crud.create_user(db,new_user)
     return new_user
 
+
+# def save_file(filename, data):
+#     with open('./data/'+filename, 'r') as f:
+#         f.write(data)
+
+@app.post("/files/upload")
+async def create_upload_file(upload_file: UploadFile = File(...)):
+    file_location = f"./data/{upload_file.filename}"
+    print('get_file:',file_location)
+    with open(file_location, "wb+") as file_object:
+        file_object.write(upload_file.file.read())
+    return {"info": f"file '{upload_file.filename}' saved at '{file_location}'"}
 
 if __name__ == "__main__":
     uvicorn.run(app="main:app", host="127.0.0.1", port=8123, reload=True)
