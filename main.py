@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pandas.api.types import CategoricalDtype
 from io import StringIO
@@ -136,15 +137,12 @@ def boosted_decision_tree_regression( filename: str = Form(...), id: str = Form(
     res['pic_addr'] = the_addr
     return res
 
+@app.get("/image/{filename}")
+def get_image(filename: str):
+    img_addr = 'images/test_image.png'
+    return FileResponse(path=img_addr, filename='hhh_img.jpeg', media_type='image/png')
 
-
-
-
-# def save_file(filename, data):
-#     with open('./data/'+filename, 'r') as f:
-#         f.write(data)
-
-@app.post("/files/upload")
+@app.get("/files/upload")
 async def create_upload_file(upload_file: UploadFile = File(...)):
     file_location = f"./data/{upload_file.filename}"
     print('get_file:',file_location)
