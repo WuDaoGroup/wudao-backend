@@ -132,3 +132,7 @@ dmypy.json
 images
 data
 .vercel
+
+*.jpg
+*.jpeg
+*.png

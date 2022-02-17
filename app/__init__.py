@@ -1,3 +1,5 @@
+import pathlib
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -10,6 +12,8 @@ def create_app():
                   version="0.0.1"
                   )
     
+    pathlib.Path('./static/data').mkdir(parents=True, exist_ok=True)
+    pathlib.Path('./static/images').mkdir(parents=True, exist_ok=True) 
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     init_middleware(app)
