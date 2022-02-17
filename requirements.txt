@@ -1,8 +1,8 @@
 fastapi[all]
 sqlalchemy
 psycopg2-binary
-# sklearn
-# pandas
-# numpy
-# matplotlib
-# seaborn
+sklearn
+pandas
+numpy
+matplotlib
+seaborn
