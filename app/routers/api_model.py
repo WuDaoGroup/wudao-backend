@@ -20,26 +20,52 @@ from app.database import SessionLocal
 router = APIRouter(prefix = "/models")
 @router.post("/predict/ols")
 def ordinary_least_squares(filename: str = Form(...)):
+    i = 0
     res = {}
-    data = pd.read_csv('./data/'+ filename)
+    data = pd.read_csv('./static/data/'+ filename)
     reg = linear_model.LinearRegression()
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
     reg.fit( X, y )
     reg_list1 = reg.coef_.tolist()
     reg_list2 = reg.intercept_.tolist()
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1[0]):
+        reg_list1[0][i] = format(reg_list1[0][i], '.4f')
+        i += 1
+    res["result_coef"] = reg_list1[0]
+    res["result_intercept"] = reg_list2[0]
+    return res
+
+@router.post("/predict/ridge_regression")
+def ridge_regression( filename: str = Form(...), alpha: str = Form(...)):
+    i = 0
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    alpha = float(alpha)
+    reg = linear_model.Ridge(alpha)
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    reg.fit( X, y )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1[0]):
+        reg_list1[0][i] = format(reg_list1[0][i], '.4f')
+        i += 1
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
     return res
 
 @router.post("/predict/bdtr")
-def boosted_decision_tree_regression( filename: str = Form(...), id: str = Form(...)):
-    the_addr = 'C:\\Users\\DELL\\Desktop\\wudao-backend\\pictures\\' + filename + id + '_handle_result.png'
+def boosted_decision_tree_regression( filename: str = Form(...) ):
+    img_addr = './static/images/' + filename + '_img.png'
+    print(filename)
     res = {}
-    data = pd.read_csv('./data/'+ filename) 
+    data = pd.read_csv('./static/data/'+ filename) 
     rng = np.random.RandomState(1)
-    X = data.iloc[:, 1:2]
-    y = data.iloc[:, 0:1]
+    X = data.iloc[:, 1:2].values
+    y = data.iloc[:, 0:1].values
     regr_1 = DecisionTreeRegressor(max_depth=4)
     regr_2 = AdaBoostRegressor(
         DecisionTreeRegressor(max_depth=4), n_estimators=300, random_state=rng
@@ -56,7 +82,7 @@ def boosted_decision_tree_regression( filename: str = Form(...), id: str = Form(
     plt.ylabel("target")
     plt.title("Boosted Decision Tree Regression")
     plt.legend()
-    plt.savefig(the_addr)
+    plt.savefig(img_addr)
     
-    res['pic_addr'] = the_addr
+    res['pic_addr'] = filename + '_img.png'
     return res
