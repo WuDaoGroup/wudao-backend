@@ -1,6 +1,9 @@
 fastapi[all]
 sqlalchemy
 psycopg2-binary
+
+openpyxl
+
 sklearn
 pandas
 numpy
