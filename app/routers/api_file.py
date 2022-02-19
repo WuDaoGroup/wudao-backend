@@ -46,8 +46,25 @@ async def return_data_file_info(data_filename: str):
     }
     return response
 
-@router.post("/features/info")
-async def process_selected_features(info: list[schemas.FeatureInfo]):
+@router.post("/{data_filename}/features/info")
+async def process_selected_features(info: list[schemas.FeatureInfo], data_filename: str):
+    if data_filename.endswith(".csv"):
+        df = pd.read_csv(f"./static/data/{data_filename}")
+    else:
+        df = pd.read_excel(f"./static/data/{data_filename}")
+    selected_features=[]
     for i in info:
-        print('type:', i.type, 'value:', i.value)
-    return info
+        if i.type=="target":
+            selected_features.append(i.value)
+    for i in info:
+        if i.type=="feature":
+            selected_features.append(i.value)
+    df = df[selected_features]
+    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv')
+    res = df.to_json(orient="records")
+    parsed = json.loads(res)
+    response={
+        'header': selected_features,
+        'content': parsed,
+    }
+    return response
