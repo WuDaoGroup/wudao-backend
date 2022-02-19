@@ -46,3 +46,8 @@ async def return_data_file_info(data_filename: str):
     }
     return response
 
+@router.post("/features/info")
+async def process_selected_features(info: list[schemas.FeatureInfo]):
+    for i in info:
+        print('type:', i.type, 'value:', i.value)
+    return info
