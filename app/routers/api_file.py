@@ -60,7 +60,7 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         if i.type=="feature":
             selected_features.append(i.value)
     df = df[selected_features]
-    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv')
+    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv', index=False)
     res = df.to_json(orient="records")
     parsed = json.loads(res)
     response={
