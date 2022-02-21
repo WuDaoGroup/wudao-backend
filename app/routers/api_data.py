@@ -18,6 +18,16 @@ async def return_data_basic_file_info(data_filename: str):
     df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
     len_df = len(df.index)
     content = []
+    feature = [
+        {'key':'name','value':'name'},
+        {'key':'count','value':'count'},
+        {'key':'missing_rate','value':'missing_rate'},
+        {'key':'mean','value':'mean'},
+        {'key':'max','value':'max'},
+        {'key':'min','value':'min'},
+        {'key':'std','value':'std'},
+        {'key':'median','value':'median'}
+        ]
     for idx, e in enumerate(df.columns):
         h = {}
         h['name'] = e
@@ -30,7 +40,9 @@ async def return_data_basic_file_info(data_filename: str):
         h['std'] = float(df[e].std())
         h['id'] = idx
         content.append(h)
+   
     response={
         'content':content,
+        'feature':feature
     }
     return response
