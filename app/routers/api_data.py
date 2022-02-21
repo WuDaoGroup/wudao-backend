@@ -18,7 +18,7 @@ async def return_data_basic_file_info(data_filename: str):
     df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
     len_df = len(df.index)
     content = []
-    feature = [
+    header = [
         {'key':'name','value':'name'},
         {'key':'count','value':'count'},
         {'key':'missing_rate','value':'missing_rate'},
@@ -43,6 +43,6 @@ async def return_data_basic_file_info(data_filename: str):
    
     response={
         'content':content,
-        'feature':feature
+        'header':header
     }
     return response
