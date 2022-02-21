@@ -18,6 +18,36 @@ from app.database import SessionLocal
 
 
 router = APIRouter(prefix = "/models")
+
+@router.post("/predict/lassoLars")
+def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: str = Form(...)):
+    i = 0
+    normal = True
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    al = float(alpha)
+    if normalize == 'True':
+        normal = True
+    else:
+        normal = False
+    reg = linear_model.LassoLars(alpha = al, normalize = normal)
+    X = data.iloc[:, 1:]
+    print(X)
+    y = data.iloc[:, :1]
+    print(y)
+    reg.fit( X, y )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
+    print(reg_list1, reg_list2)
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1):
+        reg_list1[i] = float(reg_list1[i])
+        reg_list1[i] = format(reg_list1[i], '.4f')
+        i += 1
+    res["result_coef"] = reg_list1
+    res["result_intercept"] = reg_list2[0]
+    return res
+
 @router.post("/predict/ols")
 def ordinary_least_squares(filename: str = Form(...)):
     i = 0
@@ -29,6 +59,7 @@ def ordinary_least_squares(filename: str = Form(...)):
     reg.fit( X, y )
     reg_list1 = reg.coef_.tolist()
     reg_list2 = reg.intercept_.tolist()
+    print(reg_list1, reg_list2)
     reg_list2[0] = format(reg_list2[0], '.4f') 
     while i < len(reg_list1[0]):
         reg_list1[0][i] = format(reg_list1[0][i], '.4f')
@@ -38,7 +69,7 @@ def ordinary_least_squares(filename: str = Form(...)):
     return res
 
 @router.post("/predict/lasso")
-def ridge_regression( filename: str = Form(...), alpha: str = Form(...)):
+def lasso( filename: str = Form(...), alpha: str = Form(...)):
     i = 0
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
