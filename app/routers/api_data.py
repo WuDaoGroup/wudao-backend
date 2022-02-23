@@ -1,4 +1,4 @@
-import os,csv,json
+import os,csv,json,base64
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -8,8 +8,7 @@ import pandas as pd
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
-
-
+from app.routers.api_file import selected_features
 router = APIRouter(prefix = "/data")
 
 
@@ -40,9 +39,16 @@ async def return_data_basic_file_info(data_filename: str):
         h['std'] = float(df[e].std())
         h['id'] = idx
         content.append(h)
-   
+    
     response={
         'content':content,
         'header':header
     }
+    return response
+@router.get("/{data_filename}_selected_feature.png/features/info")
+async def return_data_basic_image_info(data_filename: str):
+    response = {
+        'data' : len(selected_features)
+    }
+    # print(selected_features)
     return response
