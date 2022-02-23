@@ -31,7 +31,7 @@ async def return_data_basic_file_info(data_filename: str):
         h = {}
         h['name'] = e
         h['count'] = int(df[e].count())
-        h['missing_rate'] = str(float((1-df[e].count()/len_df)*100))+"%"
+        h['missing_rate'] = str(float((100-df[e].count()*100/len_df)))+"%"
         h['mean'] = float(df[e].mean())
         h['max'] = float(df[e].max())
         h['min'] = float(df[e].min())
@@ -59,38 +59,26 @@ async def features_zscore(data_filename: str):
     }
     return response
 
-
-@router.get("/{data_filename}_selected_feature.csv/zscore/mean")
-async def zscore_zero(data_filename: str):
+@router.get("/{data_filename}_selected_feature.csv/zscore/type")
+async def zscore_type(data_filename: str, selectType: str):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore.csv")
     df_score = df.copy()
-    df_score.fillna(value = 0,inplace=True)
-    df_score.to_csv(f'./static/data/{data_filename}_zscore_fill.csv', index=False)
-    res = df_score.to_json(orient="records")
-    parsed = json.loads(res)
-    response={
-        'content': parsed,
-    }
-    return response
-
-@router.get("/{data_filename}_selected_feature.csv/zscore/median")
-async def zscore_median(data_filename: str):
-    df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
-    df_score = pd.read_csv(f"./static/data/{data_filename}_zscore.csv")
-    h = []
-    for idx, e in enumerate(df.columns):
-        s={}
-        origin_mean = float(df[e].mean())
-        origin_std = float(df[e].std())
-        origin_median = float(df[e].median())
-        fill_median = (origin_median - origin_mean)/(origin_std+1e-12)
-        s['a']= fill_median
-        h.append(s)
-    i = 0
-    for idx, e in enumerate(df_score.columns):
-        df_score[e].fillna(value = float(h[idx]['a']),inplace=True)
-        print (idx)
-    
+    if selectType == "Mean":
+        df_score.fillna(value = 0,inplace=True)
+    elif selectType == "Median":
+        h = []
+        for idx, e in enumerate(df.columns):
+            s={}
+            origin_mean = float(df[e].mean())
+            origin_std = float(df[e].std())
+            origin_median = float(df[e].median())
+            fill_median = (origin_median - origin_mean)/(origin_std+1e-12)
+            s['a']= fill_median
+            h.append(s)
+        for idx, e in enumerate(df_score.columns):
+            df_score[e].fillna(value = float(h[idx]['a']),inplace=True)
+    else:
+        raise HTTPException(status_code=240, detail="请选择")
     df_score.to_csv(f'./static/data/{data_filename}_zscore_fill.csv', index=False)
     res = df_score.to_json(orient="records")
     parsed = json.loads(res)
@@ -104,8 +92,6 @@ async def zscore_median(data_filename: str):
 async def features_filter(data_filename: str, bar: float):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
     for f in df.columns:
-        # print("before ---------------------------------")
-        # print()
         df = df[abs(df[f])<bar]
         print (f,df,"bb////////////////////////////")
     df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
@@ -114,6 +100,10 @@ async def features_filter(data_filename: str, bar: float):
     response={
         'content': parsed,
     }
+    return response
+
+
+
 @router.get("/{data_filename}_selected_feature.png/features/info")
 async def return_data_basic_image_info(data_filename: str):
     response = {
