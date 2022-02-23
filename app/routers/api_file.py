@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Respons
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import pandas as pd
-
+import numpy as np
+import matplotlib.pyplot as plt
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
-
-
+plt.rcParams['font.sans-serif']=['SimHei']  ##设置字体为 黑体
+plt.rcParams['axes.unicode_minus']=False ##显示符号
+selected_features=[]
 router = APIRouter(prefix = "/files")
 @router.post("/upload")
 async def create_upload_file(upload_file: UploadFile = File(...)):
@@ -52,7 +54,6 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         df = pd.read_csv(f"./static/data/{data_filename}")
     else:
         df = pd.read_excel(f"./static/data/{data_filename}")
-    selected_features=[]
     for i in info:
         if i.type=="target":
             selected_features.append(i.value)
@@ -60,7 +61,17 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         if i.type=="feature":
             selected_features.append(i.value)
     df = df[selected_features]
-    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv')
+    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv', index=False)
+    num = 1
+    total = len(selected_features)
+    for selected_feature in selected_features:
+        plt.figure(figsize=(10,6))
+        plt.title(selected_feature,fontsize=18)
+        plt.hist(df[selected_feature],bins=20,edgecolor='k',alpha=0.5)
+        plt.xticks(rotation=90)
+        plt.savefig(f'./static/images/{data_filename}_selected_features_{num}.png')
+        num += 1
+
     res = df.to_json(orient="records")
     parsed = json.loads(res)
     response={
