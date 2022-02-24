@@ -63,9 +63,9 @@ async def features_zscore(data_filename: str):
 async def zscore_type(data_filename: str, selectType: str):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore.csv")
     df_score = df.copy()
-    if selectType == "Mean":
+    if selectType == "均值填充":
         df_score.fillna(value = 0,inplace=True)
-    elif selectType == "Median":
+    elif selectType == "中位数填充":
         h = []
         for idx, e in enumerate(df.columns):
             s={}
