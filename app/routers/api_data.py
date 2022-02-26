@@ -8,9 +8,7 @@ import pandas as pd
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
-from app.routers.api_file import selected_features
 router = APIRouter(prefix = "/data")
-
 
 @router.get("/{data_filename}_selected_feature.csv/features/info")
 async def return_data_basic_file_info(data_filename: str):
@@ -39,13 +37,11 @@ async def return_data_basic_file_info(data_filename: str):
         h['std'] = float(df[e].std())
         h['id'] = idx
         content.append(h)
-    
     response={
         'content':content,
         'header':header
     }
     return response
-
 @router.get("/{data_filename}_selected_feature.csv/zscore")
 async def features_zscore(data_filename: str):
     df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
@@ -100,14 +96,4 @@ async def features_filter(data_filename: str, bar: float):
     response={
         'content': parsed,
     }
-    return response
-
-
-
-@router.get("/{data_filename}_selected_feature.png/features/info")
-async def return_data_basic_image_info(data_filename: str):
-    response = {
-        'data' : len(selected_features)
-    }
-    # print(selected_features)
     return response

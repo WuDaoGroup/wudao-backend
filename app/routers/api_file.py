@@ -79,3 +79,10 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         'content': parsed,
     }
     return response
+@router.get("/{data_filename}_selected_feature.png/features/info")
+async def return_data_basic_image_info(data_filename: str):
+    response = {
+        'data' : len(selected_features)
+    }
+    # print(selected_features)
+    return response
