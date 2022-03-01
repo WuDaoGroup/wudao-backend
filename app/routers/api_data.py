@@ -37,23 +37,15 @@ async def return_data_basic_file_info(data_filename: str):
         h['std'] = float(df[e].std())
         h['id'] = idx
         content.append(h)
+    df_score = df.copy()
+    df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
+    df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
     response={
         'content':content,
         'header':header
     }
     return response
-@router.get("/{data_filename}_selected_feature.csv/zscore")
-async def features_zscore(data_filename: str):
-    df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
-    df_score = df.copy()
-    df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
-    df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    res = df_score.to_json(orient="records")
-    parsed = json.loads(res)
-    response={
-        'content': parsed,
-    }
-    return response
+
 
 @router.get("/{data_filename}_selected_feature.csv/zscore/type")
 async def zscore_type(data_filename: str, selectType: str):
