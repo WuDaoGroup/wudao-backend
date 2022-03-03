@@ -1,4 +1,5 @@
 import os
+import xgboost as xgb
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -22,7 +23,7 @@ from app.database import SessionLocal
 
 router = APIRouter(prefix = "/models")
 
-@router.post("/predict/SVC")
+@router.post("/predict/svc")
 def SVC( filename: str = Form(...), percent: str = Form(...) ):
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
@@ -31,16 +32,50 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
     
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
-    y = column_or_1d(y, warn=True)
+    y = column_or_1d(y, warn=True).ravel()
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
     
-    clf.fit( X_train, y_train )
-
-    per_test_data = clf.score(X_test, y_test)
+    clf.fit( X_train, y_train.astype('int') )
+    
+    per_test_data = clf.score( X_test, y_test.astype('int') )
     per_test_data = format(per_test_data, '.4f')
     print(per_test_data)
 
     res["result_accuracyOfTestData"] = per_test_data
+    return res
+
+@router.post("/predict/xgboost")
+def xgboost( filename: str = Form(...), percent: str = Form(...) ):
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float( percent )
+    
+    xlf = xgb.XGBRegressor(max_depth=10, 
+                        learning_rate=0.1, 
+                        n_estimators=10, 
+                        silent=True, 
+                        objective='reg:linear', 
+                        nthread=-1, 
+                        gamma=0,
+                        min_child_weight=1, 
+                        max_delta_step=0, 
+                        subsample=0.85, 
+                        colsample_bytree=0.7, 
+                        colsample_bylevel=1, 
+                        reg_alpha=0, 
+                        reg_lambda=1, 
+                        scale_pos_weight=1, 
+                        seed=1440, )
+    
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
+    
+    xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
+    print( "!!!!!", xlf.score(X_test, y_test) )
+    per_train_data = xlf.score(X_test, y_test)
+    per_train_data = format(per_train_data, '.4f')
+    res["result_accuracyOfTestData"] = per_train_data
     return res
 
 @router.post("/predict/lassoLars")
@@ -216,6 +251,6 @@ def boosted_decision_tree_regression( filename: str = Form(...) ):
     plt.title("Boosted Decision Tree Regression")
     plt.legend()
     plt.savefig(img_addr)
-    
+    print( "!!!!!!", img_addr )
     res['pic_addr'] = filename + '_img.png'
     return res
