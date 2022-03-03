@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Respons
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import pandas as pd
-
+import matplotlib.pyplot as plt
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
@@ -81,11 +81,27 @@ async def features_filter(data_filename: str, bar: float):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
     for f in df.columns:
         df = df[abs(df[f])<bar]
-        print (f,df,"bb////////////////////////////")
     df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    res = df.to_json(orient="records")
-    parsed = json.loads(res)
+    df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
+    df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+    df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
+    print (df_score)
+    h = {}
+    h['mean']= (df_score.mean())
+    h['max']= (df_score.max())
+    h['min']= (df_score.min())
+    h['median']= (df_score.median())
+    h['std']= (df_score.std())
+    h_features=['mean','max','min','median','std']
+    print (h)
+    num = 1
+    for h_feature in h_features:
+        plt.figure(figsize=(10,6))
+        plt.title(h_feature,fontsize=18)
+        plt.hist(h[h_feature],bins=10,edgecolor='k',alpha=0.5)
+        plt.savefig(f'./static/images/{data_filename}_selected_features_zscore_{num}.png')
+        num += 1
     response={
-        'content': parsed,
+        'content': h
     }
     return response
