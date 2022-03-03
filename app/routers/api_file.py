@@ -41,7 +41,6 @@ async def return_data_file_info(data_filename: str):
         h['key'] = e
         h['value'] = e
         header.append(h)
-        
     response={
         'header': header,
         'content': parsed,
