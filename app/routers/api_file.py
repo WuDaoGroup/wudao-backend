@@ -13,6 +13,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  ##设置字体为 黑体
 plt.rcParams['axes.unicode_minus']=False ##显示符号
 selected_features=[]
 router = APIRouter(prefix = "/files")
+
 @router.post("/upload")
 async def create_upload_file(upload_file: UploadFile = File(...)):
     file_type=os.path.splitext(upload_file.filename)[1]
