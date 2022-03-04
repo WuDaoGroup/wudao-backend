@@ -86,22 +86,19 @@ async def features_filter(data_filename: str, bar: float):
     df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
     df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
     print (df_score)
-    h = {}
-    h['mean']= (df_score.mean())
-    h['max']= (df_score.max())
-    h['min']= (df_score.min())
-    h['median']= (df_score.median())
-    h['std']= (df_score.std())
+    headers = []
+    for idx, e in enumerate(df_score.columns):
+        headers.append(e)
+    print(headers)
     h_features=['mean','max','min','median','std']
-    print (h)
     num = 1
-    for h_feature in h_features:
+    for header in headers:
         plt.figure(figsize=(10,6))
-        plt.title(h_feature,fontsize=18)
-        plt.hist(h[h_feature],bins=10,edgecolor='k',alpha=0.5)
+        plt.title(header,fontsize=18)
+        plt.hist(df_score[header],bins=10,edgecolor='k',alpha=0.5)
         plt.savefig(f'./static/images/{data_filename}_selected_features_zscore_{num}.png')
         num += 1
     response={
-        'content': h
+        'content': df_score
     }
     return response
