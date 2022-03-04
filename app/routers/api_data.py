@@ -4,13 +4,11 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Respons
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import pandas as pd
-
+import matplotlib.pyplot as plt
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
-from app.routers.api_file import selected_features
 router = APIRouter(prefix = "/data")
-
 
 @router.get("/{data_filename}_selected_feature.csv/features/info")
 async def return_data_basic_file_info(data_filename: str):
@@ -39,25 +37,15 @@ async def return_data_basic_file_info(data_filename: str):
         h['std'] = float(df[e].std())
         h['id'] = idx
         content.append(h)
-    
+    df_score = df.copy()
+    df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
+    df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
     response={
         'content':content,
         'header':header
     }
     return response
 
-@router.get("/{data_filename}_selected_feature.csv/zscore")
-async def features_zscore(data_filename: str):
-    df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
-    df_score = df.copy()
-    df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
-    df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    res = df_score.to_json(orient="records")
-    parsed = json.loads(res)
-    response={
-        'content': parsed,
-    }
-    return response
 
 @router.get("/{data_filename}_selected_feature.csv/zscore/type")
 async def zscore_type(data_filename: str, selectType: str):
@@ -93,21 +81,27 @@ async def features_filter(data_filename: str, bar: float):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
     for f in df.columns:
         df = df[abs(df[f])<bar]
-        print (f,df,"bb////////////////////////////")
     df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    res = df.to_json(orient="records")
-    parsed = json.loads(res)
+    df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
+    df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+    df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
+    print (df_score)
+    h = {}
+    h['mean']= (df_score.mean())
+    h['max']= (df_score.max())
+    h['min']= (df_score.min())
+    h['median']= (df_score.median())
+    h['std']= (df_score.std())
+    h_features=['mean','max','min','median','std']
+    print (h)
+    num = 1
+    for h_feature in h_features:
+        plt.figure(figsize=(10,6))
+        plt.title(h_feature,fontsize=18)
+        plt.hist(h[h_feature],bins=10,edgecolor='k',alpha=0.5)
+        plt.savefig(f'./static/images/{data_filename}_selected_features_zscore_{num}.png')
+        num += 1
     response={
-        'content': parsed,
+        'content': h
     }
-    return response
-
-
-
-@router.get("/{data_filename}_selected_feature.png/features/info")
-async def return_data_basic_image_info(data_filename: str):
-    response = {
-        'data' : len(selected_features)
-    }
-    # print(selected_features)
     return response

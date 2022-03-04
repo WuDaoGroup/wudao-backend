@@ -11,9 +11,8 @@ import app.crud as crud
 from app.database import SessionLocal
 plt.rcParams['font.sans-serif']=['SimHei']  ##设置字体为 黑体
 plt.rcParams['axes.unicode_minus']=False ##显示符号
-selected_features=[]
 router = APIRouter(prefix = "/files")
-
+selected_features_length = 0
 @router.post("/upload")
 async def create_upload_file(upload_file: UploadFile = File(...)):
     file_type=os.path.splitext(upload_file.filename)[1]
@@ -42,7 +41,6 @@ async def return_data_file_info(data_filename: str):
         h['key'] = e
         h['value'] = e
         header.append(h)
-        
     response={
         'header': header,
         'content': parsed,
@@ -51,6 +49,7 @@ async def return_data_file_info(data_filename: str):
 
 @router.post("/{data_filename}/features/info")
 async def process_selected_features(info: list[schemas.FeatureInfo], data_filename: str):
+    selected_features=[]
     if data_filename.endswith(".csv"):
         df = pd.read_csv(f"./static/data/{data_filename}")
     else:
@@ -72,11 +71,17 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         plt.xticks(rotation=90)
         plt.savefig(f'./static/images/{data_filename}_selected_features_{num}.png')
         num += 1
-
+    selected_features_length = len(selected_features)
     res = df.to_json(orient="records")
     parsed = json.loads(res)
     response={
         'header': selected_features,
         'content': parsed,
+    }
+    return response
+@router.get("/{data_filename}_selected_feature.png/features/info")
+async def return_data_basic_image_info(data_filename: str):
+    response = {
+        'data' : selected_features_length
     }
     return response
