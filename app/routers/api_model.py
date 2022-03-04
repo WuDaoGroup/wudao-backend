@@ -38,6 +38,7 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
     clf.fit( X_train, y_train.astype('int') )
     
     per_test_data = clf.score( X_test, y_test.astype('int') )
+    # .astype('int')
     per_test_data = format(per_test_data, '.4f')
     print(per_test_data)
 
