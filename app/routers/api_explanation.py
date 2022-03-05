@@ -25,10 +25,7 @@ router = APIRouter(prefix = "/explanation")
 
 @router.post("/{data_filename}/dimension_reduction")
 async def return_dimension_reduction(info: schemas.ExplanationInfo,data_filename: str):
-    if data_filename.endswith(".csv"): # 读取文件
-        df = pd.read_csv(f"./static/data/{data_filename}")
-    else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
+    df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
     print(df)
     data_array = np.array(df)
     if info.type=='PCA': # 判断降维类别
@@ -56,12 +53,8 @@ async def return_feature_corr(data_filename: str, methods: str):
     plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
     plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     sns.set(font='SimHei')  # 解决Seaborn中文显示问题
-
-    if data_filename.endswith(".csv"): # 读取文件
-        df = pd.read_csv(f"./static/data/{data_filename}")
-    else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
-
+    
+    df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
     corr_mat = df.corr(method = methods)
     f, ax = plt.subplots(figsize=(15, 8))
     sns.heatmap(corr_mat, vmax=.8, square=True, ax=ax)
@@ -78,10 +71,7 @@ async def return_object_matrix(info:schemas.FeatureCorrFeaturesInfo, data_filena
     plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
 
-    if data_filename.endswith(".csv"): # 读取文件
-        df = pd.read_csv(f"./static/data/{data_filename}")
-    else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
+    df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
 
     corr_mat = df.corr(method = 'spearman')
 
@@ -103,12 +93,7 @@ async def return_pairwise_feature_corr(cols: list, data_filename: str):
     plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
     plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
-
-    if data_filename.endswith(".csv"): # 读取文件
-        df = pd.read_csv(f"./static/data/{data_filename}")
-    else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
-
+    df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
     sns.pairplot(df[cols], height = 2.5)
     plt.savefig(f'./static/images/{data_filename}_pairwise_feature_corr_img.png') # 存储图片
     response={
