@@ -40,10 +40,7 @@ async def return_data_basic_file_info(data_filename: str):
     df_score = df.copy()
     df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
     df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    response={
-        'content':content,
-        'header':header,
-        'code': """    df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+    code_content ="""df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
     len_df = len(df.index)
     content = []
     header = [
@@ -71,6 +68,10 @@ async def return_data_basic_file_info(data_filename: str):
     df_score = df.copy()
     df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
     df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)"""
+    response={
+        'content':content,
+        'header':header,
+        'code': code_content
     }
     return response
 
@@ -135,6 +136,7 @@ async def features_filter(data_filename: str, bar: float):
     df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
     df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
     df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
+    df_score.to_csv(f'./static/data/{data_filename}_zscore_afterFilter.csv', index=False)
     # print (df_score)
     headers = []
     for idx, e in enumerate(df_score.columns):
