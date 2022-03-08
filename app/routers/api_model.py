@@ -11,6 +11,9 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
+from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_recall_curve 
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 
 import pandas as pd
 import numpy as np
@@ -23,26 +26,122 @@ from app.database import SessionLocal
 
 router = APIRouter(prefix = "/models")
 
-@router.post("/predict/svc")
-def SVC( filename: str = Form(...), percent: str = Form(...) ):
+#分类分析
+@router.post("/predict/SGDClassifierData")
+def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
+penalty: str = Form(...) ):
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
     per = float(percent)
-    clf = svm.SVC()
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    y = column_or_1d(y, warn=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
     
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X)
+
+    acc = accuracy_score(y, y_pred)
+    auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
+    per_test_data = clf.score( X_test, y_test )
+
+    per_test_data = format(per_test_data, '.4f')
+    acc = format(acc, '.4f')
+    auroc = format(auroc, '.4f')
+
+    res["result_accuracy_of_test_data"] = per_test_data
+    res['accuracy'] = acc
+    res['auroc'] = auroc
+    print("---------", per_test_data, acc, auroc)
+    res["code"] = """
+    def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
+penalty: str = Form(...) ):
+        data = pd.read_csv('./static/data/'+ filename)
+        per = float(percent)
+        X = data.iloc[:, 1:]
+        y = data.iloc[:, :1]
+        y = column_or_1d(y, warn=True)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+        
+        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
+        clf.fit(X_train, y_train)
+
+        y_pred = clf.predict(X)
+
+        acc = accuracy_score(y, y_pred)
+        auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
+        per_test_data = clf.score( X_test, y_test )
+
+        per_test_data = format(per_test_data, '.4f')
+        acc = format(acc, '.4f')
+        auroc = format(auroc, '.4f')
+    """
+    return res
+
+@router.post("/predict/svc")
+def SVC( filename: str = Form(...), percent: str = Form(...) ):
+    #变量的初始化
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    list = []
+    auprc = 1
+    auroc = ''
+   
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
     y = column_or_1d(y, warn=True).ravel()
+    print("!!!!!!!", y )
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-    
-    clf.fit( X_train, y_train )
-    
-    per_test_data = clf.score( X_test, y_test )
-    # .astype('int')
-    per_test_data = format(per_test_data, '.4f')
-    print(per_test_data)
 
-    res["result_accuracyOfTestData"] = per_test_data
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
+            auprc = 0
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
+    
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+    
+    #ACC per_test_data
+    clf = svm.SVC()
+    clf.fit( X_train, y_train )
+    y_pred = clf.predict(X)
+    acc = accuracy_score(y, y_pred)
+    per_test_data = clf.score( X_test, y_test )
+    
+    #AUROC
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+
+    per_test_data = format(per_test_data, '.4f')
+    acc = format(acc, '.4f')
+    auroc = format(auroc, '.4f')
+
+    res["result_accuracy_of_test_data"] = per_test_data
+    res["accuracy"] = acc
+    res["auroc"] = auroc
+    res["auprc"] = auprc
+    res["precision"] = precision
+    res["recall"] = recall
+    res["thresholds"] = thresholds
     res["code"] = """ 
     def SVC( filename: str = Form(...), percent: str = Form(...) ):
         data = pd.read_csv('./static/data/'+ filename)
@@ -54,13 +153,22 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
         y = column_or_1d(y, warn=True).ravel()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
         
+        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
         clf.fit( X_train, y_train )
-        
+
+        y_pred = clf.predict(X)
+
+        acc = accuracy_score(y, y_pred)
+        auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
         per_test_data = clf.score( X_test, y_test )
+
         per_test_data = format(per_test_data, '.4f')
+        acc = format(acc, '.4f')
+        auroc = format(auroc, '.4f')
     """
     return res
 
+#回归分析
 @router.post("/predict/xgboost")
 def xgboost( filename: str = Form(...), percent: str = Form(...) ):
     res = {}
@@ -89,9 +197,20 @@ def xgboost( filename: str = Form(...), percent: str = Form(...) ):
     X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
     
     xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
-    print( "!!!!!", xlf.score(X_test, y_test) )
     per_train_data = xlf.score(X_test, y_test)
     per_train_data = format(per_train_data, '.4f')
+    
+    y_pred = xlf.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
     res["result_accuracyOfTestData"] = per_train_data
     res["code"] = """
     def xgboost( filename: str = Form(...), percent: str = Form(...) ):
@@ -120,6 +239,13 @@ def xgboost( filename: str = Form(...), percent: str = Form(...) ):
         X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
         
         xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
+        y_pred = xlf.predict( X )
+        mae = mean_absolute_error(y, y_pred)
+        mae = format(mae, '.4f')
+        mse = mean_squared_error(y, y_pred)
+        mse = format(mse, '.4f')
+        r2 = r2_score(y, y_pred)
+        r2 = format(r2, '.4f')
         per_train_data = xlf.score(X_test, y_test)
         per_train_data = format(per_train_data, '.4f')
     """
@@ -148,17 +274,24 @@ def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: st
     reg.fit( X_train, y_train )
     reg_list1 = reg.coef_.tolist()
     reg_list2 = reg.intercept_.tolist()
-    # print(reg_list1, reg_list2)
 
     per_train_data = reg.score(X_train, y_train)
-    print("per_train_data:", per_train_data)
     per_train_data = format(per_train_data, '.4f')
     
-
     per_test_data = reg.score(X_test, y_test)
-    print("per_test_data:", per_test_data)
     per_test_data = format(per_test_data, '.4f')
     
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
 
     reg_list2[0] = format(reg_list2[0], '.4f') 
     while i < len(reg_list1):
@@ -193,12 +326,18 @@ def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: st
         reg_list2 = reg.intercept_.tolist()
 
         per_train_data = reg.score(X_train, y_train)
-        print("per_train_data:", per_train_data)
         per_train_data = format(per_train_data, '.4f')
 
         per_test_data = reg.score(X_test, y_test)
-        print("per_test_data:", per_test_data)
         per_test_data = format(per_test_data, '.4f')
+
+        y_pred = reg.predict( X )
+        mae = mean_absolute_error(y, y_pred)
+        mae = format(mae, '.4f')
+        mse = mean_squared_error(y, y_pred)
+        mse = format(mse, '.4f')
+        r2 = r2_score(y, y_pred)
+        r2 = format(r2, '.4f')
 
         reg_list2[0] = format(reg_list2[0], '.4f') 
         while i < len(reg_list1):
@@ -223,20 +362,30 @@ def ordinary_least_squares( filename: str = Form(...), percent: str = Form(...) 
     reg.fit( X_train, y_train )
     reg_list1 = reg.coef_.tolist()
     reg_list2 = reg.intercept_.tolist()
-    print(reg_list1, reg_list2)
 
     per_train_data = reg.score(X_train, y_train)
-    # print("per_train_data:", per_train_data)
     per_train_data = format(per_train_data, '.4f')
 
     per_test_data = reg.score(X_test, y_test)
-    # print("per_test_data:", per_test_data)
     per_test_data = format(per_test_data, '.4f')
     
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
+
     reg_list2[0] = format(reg_list2[0], '.4f') 
     while i < len(reg_list1[0]):
         reg_list1[0][i] = format(reg_list1[0][i], '.4f')
         i += 1
+    
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
     res["result_accuracyOfTestData"] = per_test_data
@@ -261,6 +410,14 @@ def ordinary_least_squares( filename: str = Form(...), percent: str = Form(...) 
 
         per_test_data = reg.score(X_test, y_test)
         per_test_data = format(per_test_data, '.4f')
+
+        y_pred = reg.predict( X )
+        mae = mean_absolute_error(y, y_pred)
+        mae = format(mae, '.4f')
+        mse = mean_squared_error(y, y_pred)
+        mse = format(mse, '.4f')
+        r2 = r2_score(y, y_pred)
+        r2 = format(r2, '.4f')
         
         reg_list2[0] = format(reg_list2[0], '.4f') 
         while i < len(reg_list1[0]):
@@ -285,17 +442,28 @@ def lasso( filename: str = Form(...), alpha: str = Form(...), percent: str = For
     reg_list2 = reg.intercept_.tolist()
 
     per_train_data = reg.score(X_train, y_train)
-    # print("per_train_data:", per_train_data)
     per_train_data = format(per_train_data, '.4f')
 
     per_test_data = reg.score(X_test, y_test)
-    # print("per_test_data:", per_test_data)
     per_test_data = format(per_test_data, '.4f')
 
     reg_list2[0] = format(reg_list2[0], '.4f') 
     while i < len(reg_list1[0]):
         reg_list1[0][i] = format(reg_list1[0][i], '.4f')
         i += 1
+    
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
+
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
     res["result_accuracyOfTestData"] = per_test_data
@@ -320,6 +488,14 @@ def lasso( filename: str = Form(...), alpha: str = Form(...), percent: str = For
         per_test_data = reg.score(X_test, y_test)
         per_test_data = format(per_test_data, '.4f')
 
+        y_pred = reg.predict( X )
+        mae = mean_absolute_error(y, y_pred)
+        mae = format(mae, '.4f')
+        mse = mean_squared_error(y, y_pred)
+        mse = format(mse, '.4f')
+        r2 = r2_score(y, y_pred)
+        r2 = format(r2, '.4f')
+
         reg_list2[0] = format(reg_list2[0], '.4f') 
         while i < len(reg_list1[0]):
             reg_list1[0][i] = format(reg_list1[0][i], '.4f')
@@ -343,17 +519,27 @@ def ridge_regression( filename: str = Form(...), alpha: str = Form(...), percent
     reg_list2 = reg.intercept_.tolist()
 
     per_train_data = reg.score(X_train, y_train)
-    # print("per_train_data:", per_train_data)
     per_train_data = format(per_train_data, '.4f')
 
     per_test_data = reg.score(X_test, y_test)
-    # print("per_test_data:", per_test_data)
     per_test_data = format(per_test_data, '.4f')
     
     reg_list2[0] = format(reg_list2[0], '.4f') 
     while i < len(reg_list1[0]):
         reg_list1[0][i] = format(reg_list1[0][i], '.4f')
         i += 1
+    
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
     res["result_accuracyOfTestData"] = per_test_data
@@ -378,6 +564,13 @@ def ridge_regression( filename: str = Form(...), alpha: str = Form(...), percent
         per_test_data = reg.score(X_test, y_test)
         per_test_data = format(per_test_data, '.4f')
         
+        y_pred = reg.predict( X )
+        mae = mean_absolute_error(y, y_pred)
+        mae = format(mae, '.4f')
+        mse = mean_squared_error(y, y_pred)
+        mse = format(mse, '.4f')
+        r2 = r2_score(y, y_pred)
+        r2 = format(r2, '.4f')
         reg_list2[0] = format(reg_list2[0], '.4f') 
         while i < len(reg_list1[0]):
             reg_list1[0][i] = format(reg_list1[0][i], '.4f')
