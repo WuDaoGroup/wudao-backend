@@ -33,21 +33,44 @@ penalty: str = Form(...) ):
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
     per = float(percent)
+    list = []
+
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
     y = column_or_1d(y, warn=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
     
-    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
+            auprc = 0
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
+    
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+    
     clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
     clf.fit(X_train, y_train)
-
     y_pred = clf.predict(X)
-
     acc = accuracy_score(y, y_pred)
-    auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
     per_test_data = clf.score( X_test, y_test )
 
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+    
     per_test_data = format(per_test_data, '.4f')
     acc = format(acc, '.4f')
     auroc = format(auroc, '.4f')
@@ -55,27 +78,49 @@ penalty: str = Form(...) ):
     res["result_accuracy_of_test_data"] = per_test_data
     res['accuracy'] = acc
     res['auroc'] = auroc
-    print("---------", per_test_data, acc, auroc)
     res["code"] = """
     def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
 penalty: str = Form(...) ):
         data = pd.read_csv('./static/data/'+ filename)
         per = float(percent)
+        list = []
+
         X = data.iloc[:, 1:]
         y = data.iloc[:, :1]
         y = column_or_1d(y, warn=True)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
         
-        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        #判断有几个预测的目标
+        for i in y:
+            if i  == 0 or i == 1 or i == -1:
+                if i not in list:
+                    list.append(i)
+            else:
+                auprc = 0
+                break
+        if len(list) != 2:
+            auprc = 0
+        if 0 in list and -1 in list:
+            auprc = 0
+        
+        #AUPRC
+        if auprc == 1:
+            clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+            y_score = clf__.decision_function( X )
+            precision, recall, thresholds = precision_recall_curve( y, y_score )
+            precision = precision.tolist() 
+            recall = recall.tolist() 
+            thresholds = thresholds.tolist()
+        
         clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
         clf.fit(X_train, y_train)
-
         y_pred = clf.predict(X)
-
         acc = accuracy_score(y, y_pred)
-        auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
         per_test_data = clf.score( X_test, y_test )
 
+        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+        
         per_test_data = format(per_test_data, '.4f')
         acc = format(acc, '.4f')
         auroc = format(auroc, '.4f')
@@ -95,7 +140,6 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
     y = column_or_1d(y, warn=True).ravel()
-    print("!!!!!!!", y )
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
 
     #判断有几个预测的目标
@@ -144,23 +188,50 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
     res["thresholds"] = thresholds
     res["code"] = """ 
     def SVC( filename: str = Form(...), percent: str = Form(...) ):
+        #变量的初始化
         data = pd.read_csv('./static/data/'+ filename)
         per = float(percent)
-        clf = svm.SVC()
-        
+        list = []
+        auprc = 1
+        auroc = ''
+    
         X = data.iloc[:, 1:]
         y = data.iloc[:, :1]
         y = column_or_1d(y, warn=True).ravel()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+
+        #判断有几个预测的目标
+        for i in y:
+            if i  == 0 or i == 1 or i == -1:
+                if i not in list:
+                    list.append(i)
+            else:
+                auprc = 0
+                break
+        if len(list) != 2:
+            auprc = 0
+        if 0 in list and -1 in list:
+            auprc = 0
         
-        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        #AUPRC
+        if auprc == 1:
+            clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+            y_score = clf__.decision_function( X )
+            precision, recall, thresholds = precision_recall_curve( y, y_score )
+            precision = precision.tolist() 
+            recall = recall.tolist() 
+            thresholds = thresholds.tolist()
+        
+        #ACC per_test_data
+        clf = svm.SVC()
         clf.fit( X_train, y_train )
-
         y_pred = clf.predict(X)
-
         acc = accuracy_score(y, y_pred)
-        auroc = roc_auc_score(y, clf_.predict_proba(X), multi_class='ovo')
         per_test_data = clf.score( X_test, y_test )
+        
+        #AUROC
+        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
 
         per_test_data = format(per_test_data, '.4f')
         acc = format(acc, '.4f')
