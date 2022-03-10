@@ -137,3 +137,4 @@ data
 *.jpeg
 *.png
 test.py
+.idea/
