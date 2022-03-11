@@ -32,7 +32,7 @@ async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: st
     causal_graph = """
         digraph {"""+ info.key + """U[label="Unobserved Confounders"];"""+info.causal + """}"""
     model= CausalModel(
-        data = training,
+        data = df,
         graph=causal_graph.replace("\n", " "),
         treatment='High_limit',
         outcome='Churn')
