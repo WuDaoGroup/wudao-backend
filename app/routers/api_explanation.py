@@ -26,7 +26,6 @@ router = APIRouter(prefix = "/explanation")
 @router.post("/{data_filename}/dimension_reduction")
 async def return_dimension_reduction(info: schemas.ExplanationInfo,data_filename: str):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
-    print(df)
     data_array = np.array(df)
     if info.type=='PCA': # 判断降维类别
         reduction_model = PCA().fit_transform(data_array)
