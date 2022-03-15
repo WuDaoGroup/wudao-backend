@@ -79,51 +79,51 @@ penalty: str = Form(...) ):
     res['accuracy'] = acc
     res['auroc'] = auroc
     res["code"] = """
-    def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
+def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
 penalty: str = Form(...) ):
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float(percent)
-        list = []
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    list = []
 
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        y = column_or_1d(y, warn=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-        
-        #判断有几个预测的目标
-        for i in y:
-            if i  == 0 or i == 1 or i == -1:
-                if i not in list:
-                    list.append(i)
-            else:
-                auprc = 0
-                break
-        if len(list) != 2:
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    y = column_or_1d(y, warn=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
             auprc = 0
-        if 0 in list and -1 in list:
-            auprc = 0
-        
-        #AUPRC
-        if auprc == 1:
-            clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
-            y_score = clf__.decision_function( X )
-            precision, recall, thresholds = precision_recall_curve( y, y_score )
-            precision = precision.tolist() 
-            recall = recall.tolist() 
-            thresholds = thresholds.tolist()
-        
-        clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
-        clf.fit(X_train, y_train)
-        y_pred = clf.predict(X)
-        acc = accuracy_score(y, y_pred)
-        per_test_data = clf.score( X_test, y_test )
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
+    
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+    
+    clf = SGDClassifier( loss=loss, penalty=penalty, max_iter=5 )
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X)
+    acc = accuracy_score(y, y_pred)
+    per_test_data = clf.score( X_test, y_test )
 
-        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
-        auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
-        
-        per_test_data = format(per_test_data, '.4f')
-        acc = format(acc, '.4f')
-        auroc = format(auroc, '.4f')
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+    
+    per_test_data = format(per_test_data, '.4f')
+    acc = format(acc, '.4f')
+    auroc = format(auroc, '.4f')
     """
     return res
 
@@ -187,60 +187,107 @@ def SVC( filename: str = Form(...), percent: str = Form(...) ):
     res["recall"] = recall
     res["thresholds"] = thresholds
     res["code"] = """ 
-    def SVC( filename: str = Form(...), percent: str = Form(...) ):
-        #变量的初始化
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float(percent)
-        list = []
-        auprc = 1
-        auroc = ''
+def SVC( filename: str = Form(...), percent: str = Form(...) ):
+    #变量的初始化
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    list = []
+    auprc = 1
+    auroc = ''
+
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    y = column_or_1d(y, warn=True).ravel()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
+            auprc = 0
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
     
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        y = column_or_1d(y, warn=True).ravel()
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+    
+    #ACC per_test_data
+    clf = svm.SVC()
+    clf.fit( X_train, y_train )
+    y_pred = clf.predict(X)
+    acc = accuracy_score(y, y_pred)
+    per_test_data = clf.score( X_test, y_test )
+    
+    #AUROC
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
 
-        #判断有几个预测的目标
-        for i in y:
-            if i  == 0 or i == 1 or i == -1:
-                if i not in list:
-                    list.append(i)
-            else:
-                auprc = 0
-                break
-        if len(list) != 2:
-            auprc = 0
-        if 0 in list and -1 in list:
-            auprc = 0
-        
-        #AUPRC
-        if auprc == 1:
-            clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
-            y_score = clf__.decision_function( X )
-            precision, recall, thresholds = precision_recall_curve( y, y_score )
-            precision = precision.tolist() 
-            recall = recall.tolist() 
-            thresholds = thresholds.tolist()
-        
-        #ACC per_test_data
-        clf = svm.SVC()
-        clf.fit( X_train, y_train )
-        y_pred = clf.predict(X)
-        acc = accuracy_score(y, y_pred)
-        per_test_data = clf.score( X_test, y_test )
-        
-        #AUROC
-        clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
-        auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
-
-        per_test_data = format(per_test_data, '.4f')
-        acc = format(acc, '.4f')
-        auroc = format(auroc, '.4f')
+    per_test_data = format(per_test_data, '.4f')
+    acc = format(acc, '.4f')
+    auroc = format(auroc, '.4f')
     """
     return res
 
 #回归分析
-@router.post("/predict/xgboost")
+@router.post("/predict/xgboost-regression")
+def xgboost_regression( filename: str = Form(...), percent: str = Form(...) ):
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float( percent )
+    
+    xlf = xgb.XGBRegressor(max_depth=10, 
+                        learning_rate=0.1, 
+                        n_estimators=10, 
+                        silent=True, 
+                        objective='reg:linear', 
+                        nthread=-1, 
+                        gamma=0,
+                        min_child_weight=1, 
+                        max_delta_step=0, 
+                        subsample=0.85, 
+                        colsample_bytree=0.7, 
+                        colsample_bylevel=1, 
+                        reg_alpha=0, 
+                        reg_lambda=1, 
+                        scale_pos_weight=1, 
+                        seed=1440, )
+    
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
+    
+    xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
+    
+    per_train_data = xlf.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
+
+    per_test_data = xlf.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
+
+    y_pred = xlf.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    res["mae"] = mae
+    res["mse"] = mse
+    res["r2"] = r2
+    res["result_accuracy_of_test_data"] = per_test_data
+    res["result_accuracy_of_train_data"] = per_train_data
+    res["code"] = """
 def xgboost( filename: str = Form(...), percent: str = Form(...) ):
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
@@ -268,9 +315,20 @@ def xgboost( filename: str = Form(...), percent: str = Form(...) ):
     X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
     
     xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
-    per_train_data = xlf.score(X_test, y_test)
-    per_train_data = format(per_train_data, '.4f')
     
+    per_train_data = xlf.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
+
+    per_test_data = xlf.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
+    
+    coef = xlf.coef_.tolist()
+    intercept = xlf.intercept_.tolist()
+    intercept[0] = format(intercept[0], '.4f') 
+    while i < len(coef[0]):
+        coef[0][i] = format(coef[0][i], '.4f')
+        i += 1
+
     y_pred = xlf.predict( X )
     mae = mean_absolute_error(y, y_pred)
     mae = format(mae, '.4f')
@@ -278,47 +336,6 @@ def xgboost( filename: str = Form(...), percent: str = Form(...) ):
     mse = format(mse, '.4f')
     r2 = r2_score(y, y_pred)
     r2 = format(r2, '.4f')
-    
-    res["mae"] = mae
-    res["mse"] = mse
-    res["r2"] = r2
-    res["result_accuracyOfTestData"] = per_train_data
-    res["code"] = """
-    def xgboost( filename: str = Form(...), percent: str = Form(...) ):
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float( percent )
-        
-        xlf = xgb.XGBRegressor(max_depth=10, 
-                            learning_rate=0.1, 
-                            n_estimators=10, 
-                            silent=True, 
-                            objective='reg:linear', 
-                            nthread=-1, 
-                            gamma=0,
-                            min_child_weight=1, 
-                            max_delta_step=0, 
-                            subsample=0.85, 
-                            colsample_bytree=0.7, 
-                            colsample_bylevel=1, 
-                            reg_alpha=0, 
-                            reg_lambda=1, 
-                            scale_pos_weight=1, 
-                            seed=1440, )
-        
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
-        
-        xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
-        y_pred = xlf.predict( X )
-        mae = mean_absolute_error(y, y_pred)
-        mae = format(mae, '.4f')
-        mse = mean_squared_error(y, y_pred)
-        mse = format(mse, '.4f')
-        r2 = r2_score(y, y_pred)
-        r2 = format(r2, '.4f')
-        per_train_data = xlf.score(X_test, y_test)
-        per_train_data = format(per_train_data, '.4f')
     """
     return res
 
@@ -371,50 +388,50 @@ def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: st
         i += 1
     res["result_coef"] = reg_list1
     res["result_intercept"] = reg_list2[0]
-    res["result_accuracyOfTestData"] = per_test_data
-    res["result_accuracyOfTrainData"] = per_train_data
+    res["result_accuracy_of_testdata"] = per_test_data
+    res["result_accuracy_of_traindata"] = per_train_data
     res["code"] = """
-    def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: str = Form(...), 
-        percent: str = Form(...) ):
-        i = 0
+def lasso_lars( filename: str = Form(...), alpha: str = Form(...), normalize: str = Form(...), 
+    percent: str = Form(...) ):
+    i = 0
+    normal = True
+    data = pd.read_csv('./static/data/'+ filename)
+    al = float( alpha )
+    per = float( percent )
+    if normalize == 'True':
         normal = True
-        data = pd.read_csv('./static/data/'+ filename)
-        al = float( alpha )
-        per = float( percent )
-        if normalize == 'True':
-            normal = True
-        else:
-            normal = False
-        
-        reg = linear_model.LassoLars(alpha = al, normalize = normal)
-        
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-        
-        reg.fit( X_train, y_train )
-        reg_list1 = reg.coef_.tolist()
-        reg_list2 = reg.intercept_.tolist()
+    else:
+        normal = False
+    
+    reg = linear_model.LassoLars(alpha = al, normalize = normal)
+    
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    
+    reg.fit( X_train, y_train )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
 
-        per_train_data = reg.score(X_train, y_train)
-        per_train_data = format(per_train_data, '.4f')
+    per_train_data = reg.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
 
-        per_test_data = reg.score(X_test, y_test)
-        per_test_data = format(per_test_data, '.4f')
+    per_test_data = reg.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
 
-        y_pred = reg.predict( X )
-        mae = mean_absolute_error(y, y_pred)
-        mae = format(mae, '.4f')
-        mse = mean_squared_error(y, y_pred)
-        mse = format(mse, '.4f')
-        r2 = r2_score(y, y_pred)
-        r2 = format(r2, '.4f')
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
 
-        reg_list2[0] = format(reg_list2[0], '.4f') 
-        while i < len(reg_list1):
-            reg_list1[i] = float(reg_list1[i])
-            reg_list1[i] = format(reg_list1[i], '.4f')
-            i += 1
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1):
+        reg_list1[i] = float(reg_list1[i])
+        reg_list1[i] = format(reg_list1[i], '.4f')
+        i += 1
     """
     return res
 
@@ -459,41 +476,41 @@ def ordinary_least_squares( filename: str = Form(...), percent: str = Form(...) 
     
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
-    res["result_accuracyOfTestData"] = per_test_data
-    res["result_accuracyOfTrainData"] = per_train_data
+    res["result_accuracy_of_testdata"] = per_test_data
+    res["result_accuracy_of_traindata"] = per_train_data
     res["code"] = """
-    def ordinary_least_squares( filename: str = Form(...), percent: str = Form(...) ):
-        i = 0
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float(percent)
-        reg = linear_model.LinearRegression()
-        
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-        
-        reg.fit( X_train, y_train )
-        reg_list1 = reg.coef_.tolist()
-        reg_list2 = reg.intercept_.tolist()
+def ordinary_least_squares( filename: str = Form(...), percent: str = Form(...) ):
+    i = 0
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    reg = linear_model.LinearRegression()
+    
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    
+    reg.fit( X_train, y_train )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
 
-        per_train_data = reg.score(X_train, y_train)
-        per_train_data = format(per_train_data, '.4f')
+    per_train_data = reg.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
 
-        per_test_data = reg.score(X_test, y_test)
-        per_test_data = format(per_test_data, '.4f')
+    per_test_data = reg.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
 
-        y_pred = reg.predict( X )
-        mae = mean_absolute_error(y, y_pred)
-        mae = format(mae, '.4f')
-        mse = mean_squared_error(y, y_pred)
-        mse = format(mse, '.4f')
-        r2 = r2_score(y, y_pred)
-        r2 = format(r2, '.4f')
-        
-        reg_list2[0] = format(reg_list2[0], '.4f') 
-        while i < len(reg_list1[0]):
-            reg_list1[0][i] = format(reg_list1[0][i], '.4f')
-            i += 1
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1[0]):
+        reg_list1[0][i] = format(reg_list1[0][i], '.4f')
+        i += 1
     """
     return res
 
@@ -537,40 +554,40 @@ def lasso( filename: str = Form(...), alpha: str = Form(...), percent: str = For
 
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
-    res["result_accuracyOfTestData"] = per_test_data
-    res["result_accuracyOfTrainData"] = per_train_data
+    res["result_accuracy_of_testdata"] = per_test_data
+    res["result_accuracy_of_traindata"] = per_train_data
     res["code"] = """
-    def lasso( filename: str = Form(...), alpha: str = Form(...), percent: str = Form(...)):
-        i = 0
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float(percent)
-        alpha = float(alpha)
-        reg = linear_model.Ridge(alpha)
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-        reg.fit( X_train, y_train )
-        reg_list1 = reg.coef_.tolist()
-        reg_list2 = reg.intercept_.tolist()
+def lasso( filename: str = Form(...), alpha: str = Form(...), percent: str = Form(...)):
+    i = 0
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    alpha = float(alpha)
+    reg = linear_model.Ridge(alpha)
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    reg.fit( X_train, y_train )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
 
-        per_train_data = reg.score(X_train, y_train)
-        per_train_data = format(per_train_data, '.4f')
+    per_train_data = reg.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
 
-        per_test_data = reg.score(X_test, y_test)
-        per_test_data = format(per_test_data, '.4f')
+    per_test_data = reg.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
 
-        y_pred = reg.predict( X )
-        mae = mean_absolute_error(y, y_pred)
-        mae = format(mae, '.4f')
-        mse = mean_squared_error(y, y_pred)
-        mse = format(mse, '.4f')
-        r2 = r2_score(y, y_pred)
-        r2 = format(r2, '.4f')
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
 
-        reg_list2[0] = format(reg_list2[0], '.4f') 
-        while i < len(reg_list1[0]):
-            reg_list1[0][i] = format(reg_list1[0][i], '.4f')
-            i += 1
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1[0]):
+        reg_list1[0][i] = format(reg_list1[0][i], '.4f')
+        i += 1
     """
     return res
 
@@ -613,39 +630,39 @@ def ridge_regression( filename: str = Form(...), alpha: str = Form(...), percent
     res["r2"] = r2
     res["result_coef"] = reg_list1[0]
     res["result_intercept"] = reg_list2[0]
-    res["result_accuracyOfTestData"] = per_test_data
-    res["result_accuracyOfTrainData"] = per_train_data
+    res["result_accuracy_of_testdata"] = per_test_data
+    res["result_accuracy_of_traindata"] = per_train_data
     res["code"] = """
-    def ridge_regression( filename: str = Form(...), alpha: str = Form(...), percent: str = Form(...)):
-        i = 0
-        data = pd.read_csv('./static/data/'+ filename)
-        per = float(percent)
-        alpha = float(alpha)
-        reg = linear_model.Ridge(alpha)
-        X = data.iloc[:, 1:]
-        y = data.iloc[:, :1]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
-        reg.fit( X_train, y_train )
-        reg_list1 = reg.coef_.tolist()
-        reg_list2 = reg.intercept_.tolist()
+def ridge_regression( filename: str = Form(...), alpha: str = Form(...), percent: str = Form(...)):
+    i = 0
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float(percent)
+    alpha = float(alpha)
+    reg = linear_model.Ridge(alpha)
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=per, random_state=0)
+    reg.fit( X_train, y_train )
+    reg_list1 = reg.coef_.tolist()
+    reg_list2 = reg.intercept_.tolist()
 
-        per_train_data = reg.score(X_train, y_train)
-        per_train_data = format(per_train_data, '.4f')
+    per_train_data = reg.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
 
-        per_test_data = reg.score(X_test, y_test)
-        per_test_data = format(per_test_data, '.4f')
-        
-        y_pred = reg.predict( X )
-        mae = mean_absolute_error(y, y_pred)
-        mae = format(mae, '.4f')
-        mse = mean_squared_error(y, y_pred)
-        mse = format(mse, '.4f')
-        r2 = r2_score(y, y_pred)
-        r2 = format(r2, '.4f')
-        reg_list2[0] = format(reg_list2[0], '.4f') 
-        while i < len(reg_list1[0]):
-            reg_list1[0][i] = format(reg_list1[0][i], '.4f')
-            i += 1
+    per_test_data = reg.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
+    
+    y_pred = reg.predict( X )
+    mae = mean_absolute_error(y, y_pred)
+    mae = format(mae, '.4f')
+    mse = mean_squared_error(y, y_pred)
+    mse = format(mse, '.4f')
+    r2 = r2_score(y, y_pred)
+    r2 = format(r2, '.4f')
+    reg_list2[0] = format(reg_list2[0], '.4f') 
+    while i < len(reg_list1[0]):
+        reg_list1[0][i] = format(reg_list1[0][i], '.4f')
+        i += 1
     """
     return res
 
@@ -677,29 +694,29 @@ def boosted_decision_tree_regression( filename: str = Form(...) ):
     plt.savefig(img_addr)
     res['pic_addr'] = filename + '_img.png'
     res["code"] = """
-    def boosted_decision_tree_regression( filename: str = Form(...) ):
-        img_addr = './static/images/' + filename + '_img.png'
-        print(filename)
-        data = pd.read_csv('./static/data/'+ filename) 
-        rng = np.random.RandomState(1)
-        X = data.iloc[:, 1:2].values
-        y = data.iloc[:, 0:1].values
-        regr_1 = DecisionTreeRegressor(max_depth=4)
-        regr_2 = AdaBoostRegressor(
-            DecisionTreeRegressor(max_depth=4), n_estimators=300, random_state=rng
-        )
-        regr_1.fit(X, y)
-        regr_2.fit(X, y)
-        y_1 = regr_1.predict(X)
-        y_2 = regr_2.predict(X)
-        plt.figure()
-        plt.scatter(X, y, c="k", label="training samples")
-        plt.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
-        plt.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
-        plt.xlabel("data")
-        plt.ylabel("target")
-        plt.title("Boosted Decision Tree Regression")
-        plt.legend()
-        plt.savefig(img_addr)
+def boosted_decision_tree_regression( filename: str = Form(...) ):
+    img_addr = './static/images/' + filename + '_img.png'
+    print(filename)
+    data = pd.read_csv('./static/data/'+ filename) 
+    rng = np.random.RandomState(1)
+    X = data.iloc[:, 1:2].values
+    y = data.iloc[:, 0:1].values
+    regr_1 = DecisionTreeRegressor(max_depth=4)
+    regr_2 = AdaBoostRegressor(
+        DecisionTreeRegressor(max_depth=4), n_estimators=300, random_state=rng
+    )
+    regr_1.fit(X, y)
+    regr_2.fit(X, y)
+    y_1 = regr_1.predict(X)
+    y_2 = regr_2.predict(X)
+    plt.figure()
+    plt.scatter(X, y, c="k", label="training samples")
+    plt.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
+    plt.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
+    plt.xlabel("data")
+    plt.ylabel("target")
+    plt.title("Boosted Decision Tree Regression")
+    plt.legend()
+    plt.savefig(img_addr)
     """
     return res
