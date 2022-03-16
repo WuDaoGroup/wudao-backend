@@ -27,8 +27,145 @@ from app.database import SessionLocal
 router = APIRouter(prefix = "/models")
 
 #分类分析
+@router.post("/predict/xgboost-classification")
+def xgboost_classification( filename: str = Form(...), percent: str = Form(...) ):
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float( percent )
+    auprc = 1
+    
+    xlf = xgb.XGBClassifier(
+        learning_rate=0.1,
+        n_estimators=1000,         # 树的个数--1000棵树建立xgboost
+        max_depth=6,               # 树的深度
+        min_child_weight = 1,      # 叶子节点最小权重
+        gamma=0.,                  # 惩罚项中叶子结点个数前的参数
+        subsample=0.8,             # 随机选择80%样本建立决策树
+        colsample_btree=0.8,       # 随机选择80%特征建立决策树
+        objective='multi:softmax', # 指定损失函数
+        scale_pos_weight=1,        # 解决样本个数不平衡的问题
+        random_state=27            # 随机数
+    )
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
+    
+    xlf.fit(
+        X_train,
+        y_train,
+        eval_set = [(X_test,y_test)],
+        eval_metric = "mlogloss",
+        early_stopping_rounds = 10,
+        verbose = True
+    )
+    
+    #accuracy
+    y_pred = xlf.predict(X_test)
+    accuracy = accuracy_score(y_test,y_pred)
+    #per_test_data
+    per_test_data = xlf.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
+    #AUROC
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
+            auprc = 0
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+
+    res["auroc"] = auroc
+    res["recall"] = recall
+    res["accuracy"] = accuracy
+    res["precision"] = precision
+    res["thresholds"] = thresholds
+    res["result_accuracy_of_test_data"] = per_test_data
+    res["code"] = """
+def xgboost_classification( filename: str = Form(...), percent: str = Form(...) ):
+    res = {}
+    data = pd.read_csv('./static/data/'+ filename)
+    per = float( percent )
+    auprc = 1
+    
+    xlf = xgb.XGBClassifier(
+        learning_rate=0.1,
+        n_estimators=1000,         # 树的个数--1000棵树建立xgboost
+        max_depth=6,               # 树的深度
+        min_child_weight = 1,      # 叶子节点最小权重
+        gamma=0.,                  # 惩罚项中叶子结点个数前的参数
+        subsample=0.8,             # 随机选择80%样本建立决策树
+        colsample_btree=0.8,       # 随机选择80%特征建立决策树
+        objective='multi:softmax', # 指定损失函数
+        scale_pos_weight=1,        # 解决样本个数不平衡的问题
+        random_state=27            # 随机数
+    )
+    X = data.iloc[:, 1:]
+    y = data.iloc[:, :1]
+    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=per, random_state=0 )
+    
+    xlf.fit(
+        X_train,
+        y_train,
+        eval_set = [(X_test,y_test)],
+        eval_metric = "mlogloss",
+        early_stopping_rounds = 10,
+        verbose = True
+    )
+    
+    #accuracy
+    y_pred = xlf.predict(X_test)
+    accuracy = accuracy_score(y_test,y_pred)
+    #per_train_data
+    per_train_data = xlf.score(X_train, y_train)
+    per_train_data = format(per_train_data, '.4f')
+    #per_test_data
+    per_test_data = xlf.score(X_test, y_test)
+    per_test_data = format(per_test_data, '.4f')
+    #AUROC
+    clf_ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    auroc = roc_auc_score(y, clf_.predict_proba(X)[:, 1], multi_class='ovo')
+
+    #判断有几个预测的目标
+    for i in y:
+        if i  == 0 or i == 1 or i == -1:
+            if i not in list:
+                list.append(i)
+        else:
+            auprc = 0
+            break
+    if len(list) != 2:
+        auprc = 0
+    if 0 in list and -1 in list:
+        auprc = 0
+    #AUPRC
+    if auprc == 1:
+        clf__ = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+        y_score = clf__.decision_function( X )
+        precision, recall, thresholds = precision_recall_curve( y, y_score )
+        precision = precision.tolist() 
+        recall = recall.tolist() 
+        thresholds = thresholds.tolist()
+    """
+    return res
+
 @router.post("/predict/SGDClassifierData")
-def SGDClassifierData( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
+def SGD_Classifier( filename: str = Form(...), percent: str = Form(...), loss: str = Form(...),
 penalty: str = Form(...) ):
     res = {}
     data = pd.read_csv('./static/data/'+ filename)
@@ -269,13 +406,16 @@ def xgboost_regression( filename: str = Form(...), percent: str = Form(...) ):
     
     xlf.fit( X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)], early_stopping_rounds = 100 )
     
+    #per_train_data
     per_train_data = xlf.score(X_train, y_train)
     per_train_data = format(per_train_data, '.4f')
 
+    #per_test_data
     per_test_data = xlf.score(X_test, y_test)
     per_test_data = format(per_test_data, '.4f')
 
     y_pred = xlf.predict( X )
+
     mae = mean_absolute_error(y, y_pred)
     mae = format(mae, '.4f')
     mse = mean_squared_error(y, y_pred)
