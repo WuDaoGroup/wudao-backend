@@ -33,6 +33,10 @@ def xgboost_classification( filename: str = Form(...), percent: str = Form(...) 
     data = pd.read_csv('./static/data/'+ filename)
     per = float( percent )
     auprc = 1
+    list = []
+    precision = []
+    recall = []
+    thresholds = []
     
     xlf = xgb.XGBClassifier(
         learning_rate=0.1,
@@ -44,7 +48,8 @@ def xgboost_classification( filename: str = Form(...), percent: str = Form(...) 
         colsample_btree=0.8,       # 随机选择80%特征建立决策树
         objective='multi:softmax', # 指定损失函数
         scale_pos_weight=1,        # 解决样本个数不平衡的问题
-        random_state=27            # 随机数
+        random_state=27,           # 随机数
+        num_class= 2
     )
     X = data.iloc[:, 1:]
     y = data.iloc[:, :1]
