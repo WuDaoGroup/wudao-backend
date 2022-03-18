@@ -1,4 +1,5 @@
-import os,csv,json
+import os
+import pathlib
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -12,76 +13,21 @@ from app.database import SessionLocal
 plt.rcParams['font.sans-serif']=['SimHei']  ##设置字体为 黑体
 plt.rcParams['axes.unicode_minus']=False ##显示符号
 router = APIRouter(prefix = "/files")
-selected_features_length = 0
+
+
+# 上传文件，根据文件后缀名的不同，直接将文件转换成csv格式并保存到本地
 @router.post("/upload")
-async def create_upload_file(upload_file: UploadFile = File(...)):
+async def create_upload_file(username: str, upload_file: UploadFile = File(...)):
     file_type=os.path.splitext(upload_file.filename)[1]
     if file_type not in [".csv", ".xls", ".xlsx"]:
         raise HTTPException(status_code=240, detail="File type not correct")
     file_location = f"./static/data/{upload_file.filename}"
     with open(file_location, "wb+") as file_object:
-        file_object.write(upload_file.file.read())
-
-
-    
-@router.get("/{data_filename}/analysis/content")
-async def return_data_file_info(data_filename: str):
-    if data_filename.endswith(".csv"):
-        df = pd.read_csv(f"./static/data/{data_filename}")
+        file_object.write(upload_file.file.read()) # 原始数据
+    # 若为Excel文件，则转换成csv文件
+    if file_type in [".xls", ".xlsx"]:
+        df = pd.read_excel(file_location)
     else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
-    res = df.to_json(orient="records")
-    parsed = json.loads(res)
-    for idx, p in enumerate(parsed):
-        p['id'] = idx
-    # print(parsed)
-    header = []
-    for idx, e in enumerate(df.columns):
-        h = {}
-        h['key'] = e
-        h['value'] = e
-        header.append(h)
-    response={
-        'header': header,
-        'content': parsed,
-    }
-    return response
-
-@router.post("/{data_filename}/features/info") # 将原data根据传入的feature info list，筛选出target/feature
-async def process_selected_features(info: list[schemas.FeatureInfo], data_filename: str):
-    selected_features=[]
-    if data_filename.endswith(".csv"):
-        df = pd.read_csv(f"./static/data/{data_filename}")
-    else:
-        df = pd.read_excel(f"./static/data/{data_filename}")
-    for i in info:
-        if i.type=="target":
-            selected_features.append(i.value)
-    for i in info:
-        if i.type=="feature":
-            selected_features.append(i.value)
-    df = df[selected_features]
-    df.to_csv(f'./static/data/{data_filename}_selected_features.csv', index=False)
-    num = 1
-    total = len(selected_features)
-    for selected_feature in selected_features:
-        plt.figure(figsize=(10,6))
-        plt.title(selected_feature,fontsize=18)
-        plt.hist(df[selected_feature],bins=20,edgecolor='k',alpha=0.5)
-        plt.xticks(rotation=90)
-        plt.savefig(f'./static/images/{data_filename}_selected_features_{num}.png')
-        num += 1
-
-    res = df.to_json(orient="records")
-    parsed = json.loads(res)
-    response={
-        'header': selected_features,
-        'content': parsed,
-    }
-    return response
-@router.get("/{data_filename}_selected_features.png/features/info")
-async def return_data_basic_image_info(data_filename: str):
-    response = {
-        'data' : selected_features_length
-    }
-    return response
+        df = pd.read_csv(file_location)
+    pathlib.Path(f'./static/data/{username}').mkdir(parents=True, exist_ok=True)
+    df.to_csv(f'./static/data/{username}/data.csv', index=False)
