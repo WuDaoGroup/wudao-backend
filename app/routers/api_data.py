@@ -193,7 +193,7 @@ async def features_filter(data_filename: str, bar: float):
         f"./static/data/{data_filename}_selected_features.csv")
     df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
     df_score.to_csv(
-        f'./static/data/{data_filename}_zscore_afterFilter.csv', index=False)
+        f'./static/data/{data_filename}_zscore_fill_filter.csv', index=False)
     # print (df_score)
     headers = []
     for idx, e in enumerate(df_score.columns):

@@ -28,7 +28,7 @@ router = APIRouter(prefix = "/causals")
 
 @router.post("/{data_filename}/model_build")
 async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: str):
-    df = pd.read_csv(f"./static/data/{data_filename}_zscore_afterFilter.csv")
+    df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill_filter.csv")
     causal_graph = """
         digraph {"""+ info.key + """U[label="Unobserved Confounders"];"""+info.causal + """}"""
     model= CausalModel(
