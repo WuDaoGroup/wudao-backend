@@ -47,7 +47,7 @@ async def return_data_file_info(data_filename: str):
     }
     return response
 
-@router.post("/{data_filename}/features/info")
+@router.post("/{data_filename}/features/info") # 将原data根据传入的feature info list，筛选出target/feature
 async def process_selected_features(info: list[schemas.FeatureInfo], data_filename: str):
     selected_features=[]
     if data_filename.endswith(".csv"):
@@ -61,7 +61,7 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         if i.type=="feature":
             selected_features.append(i.value)
     df = df[selected_features]
-    df.to_csv(f'./static/data/{data_filename}_selected_feature.csv', index=False)
+    df.to_csv(f'./static/data/{data_filename}_selected_features.csv', index=False)
     num = 1
     total = len(selected_features)
     for selected_feature in selected_features:
@@ -71,7 +71,7 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         plt.xticks(rotation=90)
         plt.savefig(f'./static/images/{data_filename}_selected_features_{num}.png')
         num += 1
-    selected_features_length = len(selected_features)
+
     res = df.to_json(orient="records")
     parsed = json.loads(res)
     response={
@@ -79,7 +79,7 @@ async def process_selected_features(info: list[schemas.FeatureInfo], data_filena
         'content': parsed,
     }
     return response
-@router.get("/{data_filename}_selected_feature.png/features/info")
+@router.get("/{data_filename}_selected_features.png/features/info")
 async def return_data_basic_image_info(data_filename: str):
     response = {
         'data' : selected_features_length

@@ -59,9 +59,9 @@ download_code = {
         "nbformat_minor": 2
     }
 
-@router.get("/{data_filename}_selected_feature.csv/features/info")
+@router.get("/{data_filename}_selected_features.csv/features/info")
 async def return_data_basic_file_info(data_filename: str):
-    df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+    df = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
     len_df = len(df.index)
     content = []
     download_code['cells'][1]['source'] = []
@@ -91,7 +91,7 @@ async def return_data_basic_file_info(data_filename: str):
     df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
     df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
     code_content = """
-df = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+df = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
 len_df = len(df.index)
 content = []
 header = [
@@ -130,7 +130,7 @@ df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
     return response
 
 
-@router.get("/{data_filename}_selected_feature.csv/zscore/type")
+@router.get("/{data_filename}_selected_features.csv/zscore/type")
 async def zscore_type(data_filename: str, selectType: str):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore.csv")
     df_score = df.copy()
@@ -182,7 +182,7 @@ parsed = json.loads(res)
     return response
 
 
-@router.get("/{data_filename}_selected_feature.csv/zscore/filter")
+@router.get("/{data_filename}_selected_features.csv/zscore/filter")
 async def features_filter(data_filename: str, bar: float):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
     for f in df.columns:
@@ -190,7 +190,7 @@ async def features_filter(data_filename: str, bar: float):
     df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
     df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
     df_origin = pd.read_csv(
-        f"./static/data/{data_filename}_selected_feature.csv")
+        f"./static/data/{data_filename}_selected_features.csv")
     df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
     df_score.to_csv(
         f'./static/data/{data_filename}_zscore_afterFilter.csv', index=False)
@@ -213,7 +213,7 @@ for f in df.columns:
     df = df[abs(df[f])<bar]
 df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
 df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
-df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_feature.csv")
+df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
 df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
 headers = []
 for idx, e in enumerate(df_score.columns):
