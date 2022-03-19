@@ -301,7 +301,7 @@ def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
     header = [
         {'key': 'name', 'value': 'name'},
         {'key': 'count', 'value': 'count'},
-        {'key': 'missing_rate', 'value': 'missing_rate'},
+        {'key': 'missing', 'value': 'missing'},
         {'key': 'mean', 'value': 'mean'},
         {'key': 'max', 'value': 'max'},
         {'key': 'min', 'value': 'min'},
@@ -314,12 +314,12 @@ def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
         h['id'] = idx
         h['name'] = e
         h['count'] = int(df[e].count())
-        h['missing_rate'] = str(float((100-df[e].count()*100/len_df)))+"%"
-        h['mean'] = float(df[e].mean())
-        h['max'] = float(df[e].max())
-        h['min'] = float(df[e].min())
-        h['median'] = float(df[e].median())
-        h['std'] = float(df[e].std())
+        h['missing'] = str(round(float((100-df[e].count()*100/len_df)),2))+"%"
+        h['mean'] = round(float(df[e].mean()), 2)
+        h['max'] = round(float(df[e].max()),2)
+        h['min'] = round(float(df[e].min()),2)
+        h['median'] = round(float(df[e].median()),2)
+        h['std'] = round(float(df[e].std()),2)
         statistic_info.append(h)
     
     response={
