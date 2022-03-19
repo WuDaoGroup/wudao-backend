@@ -298,7 +298,17 @@ async def process_selected_features(info: list[schemas.FeatureInfo], username: s
 def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
     df = pd.read_csv(f"./static/data/{username}/{step}.csv")
     len_df = len(df.index)
-    res = []
+    header = [
+        {'key': 'name', 'value': 'name'},
+        {'key': 'count', 'value': 'count'},
+        {'key': 'missing_rate', 'value': 'missing_rate'},
+        {'key': 'mean', 'value': 'mean'},
+        {'key': 'max', 'value': 'max'},
+        {'key': 'min', 'value': 'min'},
+        {'key': 'std', 'value': 'std'},
+        {'key': 'median', 'value': 'median'}
+    ]
+    statistic_info = []
     for idx, e in enumerate(df.columns):
         h = {}
         h['id'] = idx
@@ -310,8 +320,13 @@ def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
         h['min'] = float(df[e].min())
         h['median'] = float(df[e].median())
         h['std'] = float(df[e].std())
-        res.append(h)
-    return res
+        statistic_info.append(h)
+    
+    response={
+        'header': header,
+        'content': statistic_info,
+    }
+    return response
 
 @router.get("/zscore")
 def zscore_data(username: str):
