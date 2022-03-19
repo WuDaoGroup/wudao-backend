@@ -344,3 +344,13 @@ def zscore_data(username: str, fill_type: str):
     df.to_csv(f'./static/data/{username}/data_zscore_fill.csv', index=False)
     res = {'message': 'success'}
     return res
+
+@router.get("/filter")
+def filter_data(username: str, bar: float):
+    df = pd.read_csv(f"./static/data/{username}/data_zscore_fill.csv")
+    # 除第一列外，如果该行存在大于bar的值，则删除该行
+    for f in df.iloc[:,1:].columns:
+        df = df[abs(df[f]) < bar]
+    df.to_csv(f'./static/data/{username}/data_zscore_fill_filter.csv', index=False)
+    res = {'message': 'success'}
+    return res
