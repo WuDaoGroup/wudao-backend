@@ -302,9 +302,9 @@ def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
         {'key': 'name', 'value': 'name'},
         {'key': 'count', 'value': 'count'},
         {'key': 'missing', 'value': 'missing'},
-        {'key': 'mean', 'value': 'mean'},
-        {'key': 'max', 'value': 'max'},
         {'key': 'min', 'value': 'min'},
+        {'key': 'max', 'value': 'max'},
+        {'key': 'mean', 'value': 'mean'},
         {'key': 'std', 'value': 'std'},
         {'key': 'median', 'value': 'median'}
     ]
