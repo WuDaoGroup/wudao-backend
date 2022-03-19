@@ -2,12 +2,14 @@ import os
 import csv
 import json
 import base64
+import pathlib
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import app.schemas as schemas
 import app.crud as crud
 from app.database import SessionLocal
@@ -367,5 +369,21 @@ def filter_data(username: str, bar: float):
     for f in df.iloc[:,1:].columns:
         df = df[abs(df[f]) < bar]
     df.to_csv(f'./static/data/{username}/data_zscore_fill_filter.csv', index=False)
+    res = {'message': 'success'}
+    return res
+
+
+@router.post("/histogram")
+def generate_histogram(username: str = Form(...), step: str = Form(...)):
+    df = pd.read_csv(f"./static/data/{username}/{step}.csv")
+    for _, f in enumerate(df.columns):
+        plt.figure(figsize=(10,6))
+        plt.title(f,fontsize=18)
+        # plt.hist(df[f],bins=20,edgecolor='k',alpha=0.5)
+        # plt.xticks(rotation=90)
+        sns.histplot(data=df[f], color="dodgerblue")
+        pathlib.Path(f'./static/data/{username}/images/{step}').mkdir(parents=True, exist_ok=True)
+        plt.savefig(f'./static/data/{username}/images/{step}/histogram_{f}.png')
+        plt.clf()
     res = {'message': 'success'}
     return res
