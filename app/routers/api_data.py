@@ -340,7 +340,7 @@ def zscore_data(username: str):
     return res
 
 @router.get("/fill")
-def zscore_data(username: str, fill_type: str):
+def fill_data(username: str, fill_type: str):
     df = pd.read_csv(f"./static/data/{username}/data_zscore.csv")
     if fill_type == '均值填充':
         # 因为已经zscore好了，所以只需补0即可，0即为均值
