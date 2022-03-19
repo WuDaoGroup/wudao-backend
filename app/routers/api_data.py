@@ -294,4 +294,32 @@ async def process_selected_features(info: list[schemas.FeatureInfo], username: s
     }
     return response
 
+@router.post("/statistics/info")
+def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
+    df = pd.read_csv(f"./static/data/{username}/{step}.csv")
+    len_df = len(df.index)
+    res = []
+    for idx, e in enumerate(df.columns):
+        h = {}
+        h['id'] = idx
+        h['name'] = e
+        h['count'] = int(df[e].count())
+        h['missing_rate'] = str(float((100-df[e].count()*100/len_df)))+"%"
+        h['mean'] = float(df[e].mean())
+        h['max'] = float(df[e].max())
+        h['min'] = float(df[e].min())
+        h['median'] = float(df[e].median())
+        h['std'] = float(df[e].std())
+        res.append(h)
+    return res
 
+@router.get("/zscore")
+def zscore_data(username: str):
+    df = pd.read_csv(f"./static/data/{username}/data_target_confirmed.csv")
+    # 第一列是预测目标y，跳过，不能被标准化
+    df_features = df.iloc[:, 1:]
+    df_features = df_features.apply(lambda x: (x - x.mean()) / (x.std()+1e-12))
+    df = pd.concat([df.iloc[:,0], df_features], axis=1)
+    df.to_csv(f'./static/data/{username}/data_zscore.csv', index=False)
+    res = {'message': 'success'}
+    return res
