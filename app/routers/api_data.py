@@ -235,3 +235,30 @@ for header in headers:
     with open(f'./static/data/{data_filename}_download_code.ipynb', "w") as outfile:
         json.dump(download_code, outfile)
     return response
+
+
+#####################################################
+## New Version
+#####################################################
+
+# 返回数据信息(所有条目)
+@router.get("/analysis/content")
+async def return_data_file_info(username: str):
+    df = pd.read_csv(f"./static/data/{username}/data.csv")
+    res = df.to_json(orient="records")
+    parsed = json.loads(res)
+    for idx, p in enumerate(parsed):
+        p['id'] = idx
+    # print(parsed)
+    header = []
+    for idx, e in enumerate(df.columns):
+        h = {}
+        h['key'] = e
+        h['value'] = e
+        header.append(h)
+    response={
+        'header': header,
+        'content': parsed,
+    }
+    return response
+
