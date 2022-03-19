@@ -267,32 +267,24 @@ async def return_data_file_info(username: str):
 # 将原data根据传入的feature info list，筛选出target/feature
 @router.post("/features/info")
 async def process_selected_features(info: list[schemas.FeatureInfo], username: str):
-    selected_features=[]
+    all_features = []
     df = pd.read_csv(f"./static/data/{username}/data.csv")
+    features = []
     for i in info:
         if i.type=="target":
-            selected_features.append(i.value)
+            all_features.append(i)
+            features.append(i.value)
+            break
     for i in info:
         if i.type=="feature":
-            selected_features.append(i.value)
-    df = df[selected_features]
+            all_features.append(i)
+            features.append(i.value)
+    df = df[features]
     df.to_csv(f'./static/data/{username}/data_target_confirmed.csv', index=False)
-    # num = 1
-    # total = len(selected_features)
-    # for selected_feature in selected_features:
-    #     plt.figure(figsize=(10,6))
-    #     plt.title(selected_feature,fontsize=18)
-    #     plt.hist(df[selected_feature],bins=20,edgecolor='k',alpha=0.5)
-    #     plt.xticks(rotation=90)
-    #     plt.savefig(f'./static/images/{data_filename}_selected_features_{num}.png')
-    #     num += 1
-
-    # res = df.to_json(orient="records")
-    # parsed = json.loads(res)
     response={
-        'target': selected_features[0],
-        'features': selected_features[1:]
-        # 'content': parsed,
+        'target': features[0],
+        'features': features[1:],
+        'all_features': all_features
     }
     return response
 
