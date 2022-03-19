@@ -323,3 +323,24 @@ def zscore_data(username: str):
     df.to_csv(f'./static/data/{username}/data_zscore.csv', index=False)
     res = {'message': 'success'}
     return res
+
+@router.get("/fill")
+def zscore_data(username: str, fill_type: str):
+    df = pd.read_csv(f"./static/data/{username}/data_zscore.csv")
+    if fill_type == '均值填充':
+        # 因为已经zscore好了，所以只需补0即可，0即为均值
+        df.fillna(value=0, inplace=True)
+    elif fill_type == '中位数填充':
+        # 先计算出原始feature的中位数
+        info = []
+        for _, e in enumerate(df.columns):
+            h = {}
+            h['name'] = e
+            h['median'] = float(df[e].median())
+            info.append(h)
+        print(info)
+        for idx, e in enumerate(df.columns):
+            df[e].fillna(value=info[idx]['median'], inplace=True)
+    df.to_csv(f'./static/data/{username}/data_zscore_fill.csv', index=False)
+    res = {'message': 'success'}
+    return res
