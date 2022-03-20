@@ -1,4 +1,5 @@
 import os
+import math
 import xgboost as xgb
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
@@ -865,3 +866,70 @@ def boosted_decision_tree_regression( filename: str = Form(...) ):
     plt.savefig(img_addr)
     """
     return res
+
+
+#####################################################
+## New Version
+#####################################################
+
+@router.post("/regression/predict")
+def train_regression_model( username: str = Form(...), percent: float = Form(...), method: str = Form(...)):
+    # 读数据文件
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    
+    # 选择模型
+    if method == 'xgboost':
+        model = xgb.XGBRegressor(verbosity=0, n_estimators=100)
+        # n_estimators – Number of gradient boosted trees. Equivalent to number of boosting rounds.
+    
+    # 划分训练集和测试集
+    x = df.iloc[:, 1:]
+    y = df.iloc[:, :1]
+    x_train, x_test, y_train, y_test = train_test_split( x, y, test_size=percent, random_state=42)
+    
+    # 训练模型，对于回归模型使用r2评价指标
+    model.fit( x_train, y_train, eval_metric='r2', verbose = True, eval_set = [(x_test, y_test)], early_stopping_rounds = 100 )
+    
+    # 在测试集上预测
+    y_pred = model.predict(x)
+
+    # format function returns a string
+    mae = format(mean_absolute_error(y, y_pred), '.2f')
+    mse = format(mean_squared_error(y, y_pred), '.2f')
+    rmse = format(math.sqrt(float(mse)), '.2f')
+    r2 = format(r2_score(y, y_pred), '.2f')
+
+    res = [
+        {'indicator': 'MAE', 'value': mae},
+        {'indicator': 'MSE', 'value': mse},
+        {'indicator': 'RMSE', 'value': rmse},
+        {'indicator': 'R-squared', 'value': r2}
+    ]
+
+    accuracy_res = calculate_accuracy(y, y_pred)
+    res.extends(accuracy_res)
+
+    return res
+
+
+def calculate_accuracy(y, y_pred): # a pred
+    count_percent=[0,0,0,0] # 5%, 10%, 15%, 20%
+    assert(len(y)==len(y_pred))
+    data_length = len(y) # y is the GT
+    for i in range(data_length):
+        accuracy = (y_pred[i] - y[i]) / y[i]
+        for j in range(4):
+            if accuracy <= (j+1)*0.05:
+                count_percent[j] += 1
+    count_percent = [(i / data_length) for i in count_percent]
+
+    res = [
+        {'indicator': '5%准确率', 'value': format(count_percent[0], '.2f')},
+        {'indicator': '10%准确率', 'value': format(count_percent[1], '.2f')},
+        {'indicator': '15%准确率', 'value': format(count_percent[2], '.2f')},
+        {'indicator': '20%准确率', 'value': format(count_percent[3], '.2f')},
+    ]
+
+    return res
+
+
