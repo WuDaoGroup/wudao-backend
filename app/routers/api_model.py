@@ -12,9 +12,10 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, f1_score
 from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_recall_curve 
 from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn import tree
 
 import pandas as pd
 import numpy as np
@@ -938,3 +939,31 @@ def calculate_regression_accuracy(y, y_pred): # gt & predicted value
     return res
 
 
+@router.post("/classification/predict")
+def train_classification_model( username: str = Form(...), percent: float = Form(...), method: str = Form(...)):
+    # 读数据文件
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+
+    # 划分训练集和测试集
+    x = df.iloc[:, 1:]
+    y = df.iloc[:, :1]
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=percent, random_state=42)
+
+    # 选择模型并拟合
+    if method == 'decision_tree':
+        model = tree.DecisionTreeClassifier()
+        # 训练模型，对于分类模型使用roc_auc评价指标
+        model.fit(x_train, y_train)
+    
+    # 在测试集上预测
+    y_pred = model.predict(x_test)
+
+    # format function returns a string
+    accuracy = format(accuracy_score(y_test, y_pred), '.2f')
+    f1_score_result = format(f1_score(y_test, y_pred), '.2f')
+
+    res = [
+        {'indicator': '准确率', 'value': accuracy},
+        {'indicator': 'F1 score', 'value': f1_score_result}
+    ]
+    return res
