@@ -878,8 +878,10 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
     
     # 选择模型
+    eval_metric = 'r2' # 默认使用r2作为评价指标
     if method == 'xgboost':
         model = xgb.XGBRegressor(verbosity=0, n_estimators=100, learning_rate=0.1)
+        eval_metric = 'auc'
         # n_estimators – Number of gradient boosted trees. Equivalent to number of boosting rounds.
     
     # 划分训练集和测试集
@@ -888,7 +890,7 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=percent, random_state=42)
     
     # 训练模型，对于回归模型使用r2评价指标
-    model.fit(x_train, y_train, eval_metric='auc')
+    model.fit(x_train, y_train, eval_metric=eval_metric)
     
     # 在测试集上预测
     y_pred = model.predict(x_test)
@@ -909,13 +911,13 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     # print(res)
     # print('aaaa',y_test.shape, type(y_test)) # (243,1) dataframe
     # print('bbb',y_pred.shape, type(y_pred)) # (243,) ndarray
-    accuracy_res = calculate_accuracy(np.squeeze(y_test.values), y_pred)
+    accuracy_res = calculate_regression_accuracy(np.squeeze(y_test.values), y_pred)
     res.extend(accuracy_res)
 
     return res
 
 
-def calculate_accuracy(y, y_pred): # gt & predicted value
+def calculate_regression_accuracy(y, y_pred): # gt & predicted value
     count_percent=[0,0,0,0] # 5%, 10%, 15%, 20%
     assert(len(y.shape)==len(y_pred.shape))
     data_length = y.shape[0] # y is the GT
