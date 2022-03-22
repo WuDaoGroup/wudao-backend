@@ -35,12 +35,14 @@ async def data_dimension_reduction(username: str = Form(...), method: str = Form
         reduction_model = TSNE(n_components=dimension, learning_rate='auto').fit_transform(df)
     df_target=df[target]
     if dimension ==2: # 判断降维维度
+        print(df_target.shape, reduction_model.shape)
         df_subset = pd.DataFrame({'2d-one': reduction_model[:,0], '2d-two': reduction_model[:,1], 'target': df_target})
-        plt.figure(figsize=(10,10))
+        plt.figure(figsize=(6,6))
         sns.scatterplot(
             x="2d-one", y="2d-two",
             hue="target",
-            palette=sns.color_palette("hls", df_target.shape[0]),
+            # palette=sns.color_palette("hls", df_target.shape[0]),
+            palette=sns.color_palette('coolwarm', as_cmap = True), 
             data=df_subset,
             legend=False,
             alpha=0.3,
