@@ -102,12 +102,13 @@ async def target_correlation(username: str = Form(...), k_number: int = Form(...
     return response
 
 @router.post("/correlation/pairwise")
-async def pairwise_feature_correlation(username: str = Form(...), features: str = Form(...)):
+async def pairwise_feature_correlation(username: str = Form(...)):
     # plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
     # plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # sns.set(font='SimHei')  # 解决Seaborn中文显示问题
-    features = features.split(',')
+    # features = features.split(',')
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    features = df.columns
     sns.pairplot(df[features], height = 2.5)
     pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
     plt.savefig(f'./static/data/{username}/images/explanation/correlation_feature_pairwise.png')
