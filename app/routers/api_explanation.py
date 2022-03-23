@@ -73,7 +73,7 @@ async def data_dimension_reduction(username: str = Form(...), method: str = Form
 async def feature_correlation(username: str = Form(...), method: str = Form(...)): 
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
     corr_mat = df.corr(method = method)
-    plt.subplots(figsize=(15, 8))
+    plt.subplots(figsize=(24, 16))
     sns.heatmap(corr_mat, square=True)
     plt.title(f'Correlation Matrix of Features ({method})', fontsize=18)
     pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
@@ -93,7 +93,7 @@ async def target_correlation(username: str = Form(...), k_number: int = Form(...
     # nlargest可以用于找到列表中最大的前k_number个元素
     cols = corr_mat.nlargest(k_number, target)[target].index
     cm = np.corrcoef(df[cols].values.T)
-    plt.subplots(figsize=(15, 8))
+    plt.subplots(figsize=(24, 16))
     sns.heatmap(cm, annot=True, square=False, yticklabels=cols.values, xticklabels=cols.values)
     plt.title(f'Correlation Matrix of Targets (Top {k_number} related features)', fontsize=18)
     pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
@@ -102,10 +102,11 @@ async def target_correlation(username: str = Form(...), k_number: int = Form(...
     return response
 
 @router.post("/correlation/pairwise")
-async def pairwise_feature_correlation(username: str = Form(...), features: list[str] = Form(...)):
+async def pairwise_feature_correlation(username: str = Form(...), features: str = Form(...)):
     # plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
     # plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-    # sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
+    # sns.set(font='SimHei')  # 解决Seaborn中文显示问题
+    features = features.split(',')
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
     sns.pairplot(df[features], height = 2.5)
     pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
