@@ -24,10 +24,11 @@ from app.database import SessionLocal
 
 router = APIRouter(prefix = "/explanation")
 
+# 降维
 @router.post("/reduction")
 async def data_dimension_reduction(username: str = Form(...), method: str = Form(...), dimension: int = Form(...), target: str = Form(...)):
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
-    plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+    # plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
+    # plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
     if method=='PCA': # 判断降维类别
         reduction_model = PCA().fit_transform(df)
@@ -67,55 +68,47 @@ async def data_dimension_reduction(username: str = Form(...), method: str = Form
     res = {'message': 'reduction success'}
     return res
 
-@router.post("/{data_filename}/feature_corr")
-async def return_feature_corr(data_filename: str, methods: str):
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
-    plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-    sns.set(font='SimHei')  # 解决Seaborn中文显示问题
-    
-    df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill_filter.csv")
-    corr_mat = df.corr(method = methods)
-    f, ax = plt.subplots(figsize=(15, 8))
-    sns.heatmap(corr_mat, vmax=.8, square=True, ax=ax)
-
-    plt.savefig(f'./static/images/{data_filename}_feature_corr_img.png') # 存储图片
-    response={
-        'pic_addr': './static/images/{data_filename}_feature_corr_img.png'
-    }
+# 特征的相关矩阵
+@router.post("/correlation/feature")
+async def feature_correlation(username: str = Form(...), method: str = Form(...)): 
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    corr_mat = df.corr(method = method)
+    plt.subplots(figsize=(15, 8))
+    sns.heatmap(corr_mat, square=True)
+    plt.title(f'Correlation Matrix of Features ({method})', fontsize=18)
+    pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
+    plt.savefig(f'./static/data/{username}/images/explanation/correlation_feature_{method}.png')
+    response = {'message': 'generate feature correlation success'}
     return response
 
-@router.post("/{data_filename}/object_matrix")
-async def return_object_matrix(info:schemas.FeatureCorrFeaturesInfo, data_filename: str,):
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
-    plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-    sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
+@router.post("/correlation/target")
+async def target_correlation(username: str = Form(...), k_number: int = Form(...), target: str = Form(...)):
+    # plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
+    # plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+    # sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
 
-    df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill_filter.csv")
-
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    # 默认使用spearman相关性
     corr_mat = df.corr(method = 'spearman')
-
-    k = int(info.k_number)
-    cols = corr_mat.nlargest(k, info.object)[info.object].index
-    #nlargest可以用于找到列表中最大的前k个元素
+    # nlargest可以用于找到列表中最大的前k_number个元素
+    cols = corr_mat.nlargest(k_number, target)[target].index
     cm = np.corrcoef(df[cols].values.T)
-    plt.figure(figsize=(15, 8))
-    sns.heatmap(cm, annot=True, square=True, yticklabels=cols.values, xticklabels=cols.values)
-
-    plt.savefig(f'./static/images/{data_filename}_object_matrix_img.png') # 存储图片
-    response={
-        'pic_addr': './static/images/{data_filename}_object_matrix_img.png'
-    }
+    plt.subplots(figsize=(15, 8))
+    sns.heatmap(cm, annot=True, square=False, yticklabels=cols.values, xticklabels=cols.values)
+    plt.title(f'Correlation Matrix of Targets (Top {k_number} related features)', fontsize=18)
+    pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
+    plt.savefig(f'./static/data/{username}/images/explanation/correlation_target_{target}_{k_number}.png')
+    response = {'message': 'generate target correlation success'}
     return response
 
-@router.post("/{data_filename}/pairwise_feature_corr")
-async def return_pairwise_feature_corr(cols: list, data_filename: str):
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
-    plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-    sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
-    df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill_filter.csv")
-    sns.pairplot(df[cols], height = 2.5)
-    plt.savefig(f'./static/images/{data_filename}_pairwise_feature_corr_img.png') # 存储图片
-    response={
-        'pic_addr': './static/images/{data_filename}_pairwise_feature_corr_img.png'
-    }
+@router.post("/correlation/pairwise")
+async def pairwise_feature_correlation(username: str = Form(...), features: list[str] = Form(...)):
+    # plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
+    # plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+    # sns.set(font='SimHei')  # 解决Seaborn中文显示问题 
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    sns.pairplot(df[features], height = 2.5)
+    pathlib.Path(f'./static/data/{username}/images/explanation').mkdir(parents=True, exist_ok=True)
+    plt.savefig(f'./static/data/{username}/images/explanation/correlation_feature_pairwise.png')
+    response = {'message': 'generate pairwise feature correlation success'}
     return response
