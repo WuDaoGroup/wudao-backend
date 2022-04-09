@@ -1,6 +1,8 @@
 import os
 import math
 import xgboost as xgb
+import lightgbm as lgb
+# import autosklearn.classification
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -15,11 +17,17 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, f1_score
 from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_recall_curve 
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import VotingRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn import tree
-
+from catboost import CatBoostRegressor
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -895,6 +903,23 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     elif method == 'svm':
         model = svm.SVR()
         model.fit(x_train, y_train)
+    elif method == 'voting':
+        reg1 = GradientBoostingRegressor(random_state=1)
+        reg2 = RandomForestRegressor(random_state=1)
+        reg3 = LinearRegression()
+        model = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
+        model.fit(x_train, y_train)
+    elif method == 'lightgbm':
+        num_round = 10
+        param = {'num_leaves': 31, 'objective': 'binary'}
+        model = lgb.train(param, y_train, num_round, valid_sets=[x_train])
+    elif method == 'catboost':
+        model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
+        model.fit(x_train, y_train)
+    elif method == 'auto_sklearn':
+        model = autosklearn.classification.AutoSklearnClassifier()
+        model.fit(x_train, y_train)
+    
 
 
 
@@ -959,6 +984,11 @@ def train_classification_model( username: str = Form(...), percent: float = Form
     elif method == 'adaboost':
         model = AdaBoostClassifier(n_estimators=100)
         model.fit(x_train, y_train)
+    elif method == 'naive_bayes':
+        model = GaussianNB()
+        model.fit(x_train, y_train)
+    
+
     # 在测试集上预测
     y_pred = model.predict(x_test)
 
