@@ -956,10 +956,9 @@ def train_classification_model( username: str = Form(...), percent: float = Form
     if method == 'decision_tree':
         model = tree.DecisionTreeClassifier()
         model.fit(x_train, y_train)
-    elif method == 'AdaBoost':
+    elif method == 'adaboost':
         model = AdaBoostClassifier(n_estimators=100)
-        scores = cross_val_score(model, x_train, y_train, cv=5)
-        scores.mean()
+        model.fit(x_train, y_train)
     # 在测试集上预测
     y_pred = model.predict(x_test)
 
