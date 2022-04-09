@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 
 from sklearn import linear_model
 from sklearn import svm
+from sklearn.datasets import load_iris
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
@@ -889,6 +892,12 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         # n_estimators – Number of gradient boosted trees. Equivalent to number of boosting rounds.
         # 训练模型，对于回归模型使用r2评价指标
         model.fit(x_train, y_train, eval_metric='auc')
+    elif method == 'svm':
+        model = svm.SVR()
+        model.fit(x_train, y_train)
+
+
+
     
     # 在测试集上预测
     y_pred = model.predict(x_test)
@@ -947,7 +956,10 @@ def train_classification_model( username: str = Form(...), percent: float = Form
     if method == 'decision_tree':
         model = tree.DecisionTreeClassifier()
         model.fit(x_train, y_train)
-    
+    elif method == 'AdaBoost':
+        model = AdaBoostClassifier(n_estimators=100)
+        scores = cross_val_score(model, x_train, y_train, cv=5)
+        scores.mean()
     # 在测试集上预测
     y_pred = model.predict(x_test)
 
