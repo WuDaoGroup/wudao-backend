@@ -24,7 +24,7 @@ from app.database import SessionLocal
 
 # -*- coding: UTF-8 -*-
 
-router = APIRouter(prefix = "/causals")
+router = APIRouter(prefix = "/causal")
 
 @router.post("/{data_filename}/model_build")
 async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: str):
