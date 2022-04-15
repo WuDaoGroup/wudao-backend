@@ -33,7 +33,7 @@ async def data_dimension_reduction(username: str = Form(...), method: str = Form
     if method=='PCA': # 判断降维类别
         reduction_model = PCA().fit_transform(df)
     elif method=='TSNE':
-        reduction_model = TSNE(n_components=dimension, learning_rate='auto').fit_transform(df)
+        reduction_model = TSNE(n_components=dimension).fit_transform(df)
     df_target=df[target]
     if dimension ==2: # 判断降维维度
         print(df_target.shape, reduction_model.shape)
