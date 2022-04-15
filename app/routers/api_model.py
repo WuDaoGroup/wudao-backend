@@ -914,7 +914,7 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         param = {'num_leaves': 31, 'objective': 'binary'}
         model = lgb.train(param, y_train, num_round, valid_sets=[x_train])
     elif method == 'catboost':
-        model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
+        model = CatBoostRegressor(iterations=2, learning_rate=1, depth=2, loss_function='RMSE', verbose=None)
         model.fit(x_train, y_train)
     # elif method == 'auto_sklearn':
     #     model = autosklearn.classification.AutoSklearnClassifier()
