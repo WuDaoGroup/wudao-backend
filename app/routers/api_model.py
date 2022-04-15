@@ -916,9 +916,9 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     elif method == 'catboost':
         model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
         model.fit(x_train, y_train)
-    elif method == 'auto_sklearn':
-        model = autosklearn.classification.AutoSklearnClassifier()
-        model.fit(x_train, y_train)
+    # elif method == 'auto_sklearn':
+    #     model = autosklearn.classification.AutoSklearnClassifier()
+    #     model.fit(x_train, y_train)
     
 
 

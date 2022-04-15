@@ -13,3 +13,6 @@ xgboost
 
 dowhy
 openpyxl
+
+lightgbm
+catboost
