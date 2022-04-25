@@ -3,6 +3,7 @@ import math
 import xgboost as xgb
 import lightgbm as lgb
 import autosklearn.regression
+import autosklearn.classification
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -909,10 +910,10 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         reg3 = LinearRegression()
         model = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
         model.fit(x_train, y_train)
-    elif method == 'lightgbm':
-        num_round = 10
-        param = {'num_leaves': 31, 'objective': 'binary'}
-        model = lgb.train(param, y_train, num_round, valid_sets=[x_train])
+    # elif method == 'lightgbm':
+    #     num_round = 10
+    #     param = {'num_leaves': 31, 'objective': 'binary'}
+    #     model = lgb.train(param, y_train, num_round, valid_sets=[x_train])
     elif method == 'catboost':
         model = CatBoostRegressor(iterations=2, learning_rate=1, depth=2, loss_function='RMSE', verbose=None, allow_writing_files=False)
         model.fit(x_train, y_train)
@@ -920,7 +921,7 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         model = autosklearn.regression.AutoSklearnRegressor(
             time_left_for_this_task=120,
             per_run_time_limit=30,
-            tmp_folder='./tmp/autosklearn_regression_example_tmp',
+            tmp_folder='./tmp/autosklearn_regression_tmp',
         )
         model.fit(x_train, y_train)
     
@@ -987,8 +988,14 @@ def train_classification_model( username: str = Form(...), percent: float = Form
     elif method == 'naive_bayes':
         model = GaussianNB()
         model.fit(x_train, y_train)
+    elif method == 'auto_sklearn':
+        model = autosklearn.classification.AutoSklearnClassifier(
+            time_left_for_this_task=120,
+            per_run_time_limit=30,
+            tmp_folder='./tmp/autosklearn_classification_tmp',
+        )
+        model.fit(x_train, y_train)
     
-
     # 在测试集上预测
     y_pred = model.predict(x_test)
 
