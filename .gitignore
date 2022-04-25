@@ -138,3 +138,4 @@ data
 *.png
 test.py
 .idea/
+catboost_info/
