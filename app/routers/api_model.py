@@ -2,7 +2,7 @@ import os
 import math
 import xgboost as xgb
 import lightgbm as lgb
-# import autosklearn.classification
+import autosklearn.regression
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -916,13 +916,13 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     elif method == 'catboost':
         model = CatBoostRegressor(iterations=2, learning_rate=1, depth=2, loss_function='RMSE', verbose=None)
         model.fit(x_train, y_train)
-    # elif method == 'auto_sklearn':
-    #     model = autosklearn.classification.AutoSklearnClassifier()
-    #     model.fit(x_train, y_train)
-    
-
-
-
+    elif method == 'auto_sklearn':
+        model = autosklearn.regression.AutoSklearnRegressor(
+            time_left_for_this_task=120,
+            per_run_time_limit=30,
+            tmp_folder='./tmp/autosklearn_regression_example_tmp',
+        )
+        model.fit(x_train, y_train)
     
     # 在测试集上预测
     y_pred = model.predict(x_test)
