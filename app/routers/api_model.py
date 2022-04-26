@@ -1036,8 +1036,20 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
         res.append({'indicator': k, 'value': round(v, 2)})
     return res
 
+@router.post("/autogluon/test")
+def train_autogluon(username: str = Form(...), percent: float = Form(...)):
+    df = pd.read_csv(f'./static/data/{username}/data.csv')
+    cols = df.columns.tolist()
+    label = cols[0]
 
+    save_path = f'./static/data/{username}/autogluon'
+    predictor = TabularPredictor.load(save_path)
+    
+    # predict
+    y_pred = predictor.predict(df)
+    df = pd.concat(pd.DataFrame({'label':y_pred}), df, axis=1)
+    df.to_csv(f'./static/data/{username}/data_pred.csv', index=False)
+    res = {'message': 'success'}
 
-
-
+    return res
     
