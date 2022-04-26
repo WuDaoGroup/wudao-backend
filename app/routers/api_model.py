@@ -1037,7 +1037,7 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
     return res
 
 @router.post("/autogluon/test")
-def train_autogluon(username: str = Form(...), percent: float = Form(...)):
+def train_autogluon(username: str = Form(...)):
     df = pd.read_csv(f'./static/data/{username}/data.csv')
     cols = df.columns.tolist()
     label = cols[0]
@@ -1047,7 +1047,7 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
     
     # predict
     y_pred = predictor.predict(df)
-    df = pd.concat(pd.DataFrame({'label':y_pred}), df, axis=1)
+    df = pd.concat([pd.DataFrame({'label':y_pred}), df], axis=1)
     df.to_csv(f'./static/data/{username}/data_pred.csv', index=False)
     res = {'message': 'success'}
 
