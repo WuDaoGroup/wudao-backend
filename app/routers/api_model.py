@@ -1033,7 +1033,7 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
     perf = predictor.evaluate_predictions(y_true=y_test, y_pred=y_pred, auxiliary_metrics=True)
     res = []
     for k, v in perf.items():
-        res.append({'indicator': k, 'value': v})
+        res.append({'indicator': k, 'value': round(v, 2)})
     return res
 
 
