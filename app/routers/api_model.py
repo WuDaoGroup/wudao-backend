@@ -32,6 +32,7 @@ from catboost import CatBoostRegressor
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from autogluon.tabular import TabularDataset, TabularPredictor
 
 import app.schemas as schemas
 import app.crud as crud
@@ -1008,3 +1009,35 @@ def train_classification_model( username: str = Form(...), percent: float = Form
         {'indicator': 'F1 score', 'value': f1_score_result}
     ]
     return res
+
+@router.post("/autogluon/predict")
+def train_autogluon(username: str = Form(...), percent: float = Form(...)):
+    df = pd.read_csv(f'./static/data/{username}/data.csv')
+    cols = df.columns.tolist()
+    label = cols[0]
+    # 划分训练集和测试集
+    x = df.iloc[:, 1:]
+    y = df.iloc[:, :1]
+    train_data, test_data = train_test_split(df, test_size=percent,random_state=42)
+    save_path = f'./static/data/{username}/autogluon'
+
+    # train
+    predictor = TabularPredictor(label=label, path=save_path).fit(train_data)
+
+    # test
+    y_test = test_data[label]
+    test_data_nolab = test_data.drop(columns=[label])
+    y_pred = predictor.predict(test_data_nolab)
+    
+    # save evaluation scores
+    perf = predictor.evaluate_predictions(y_true=y_test, y_pred=y_pred, auxiliary_metrics=True)
+    res = []
+    for k, v in perf.items():
+        res.append({'indicator': k, 'value': v})
+    return res
+
+
+
+
+
+    
