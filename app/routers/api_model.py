@@ -886,7 +886,7 @@ def boosted_decision_tree_regression( filename: str = Form(...) ):
 ## New Version
 #####################################################
 
-@router.post("/regression/predict")
+@router.post("/regression/train")
 def train_regression_model( username: str = Form(...), percent: float = Form(...), method: str = Form(...)):
     # 读数据文件
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
@@ -969,7 +969,7 @@ def calculate_regression_accuracy(y, y_pred): # gt & predicted value
     return res
 
 
-@router.post("/classification/predict")
+@router.post("/classification/train")
 def train_classification_model( username: str = Form(...), percent: float = Form(...), method: str = Form(...)):
     # 读数据文件
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
@@ -1010,7 +1010,7 @@ def train_classification_model( username: str = Form(...), percent: float = Form
     ]
     return res
 
-@router.post("/autogluon/predict")
+@router.post("/autogluon/train")
 def train_autogluon(username: str = Form(...), percent: float = Form(...)):
     df = pd.read_csv(f'./static/data/{username}/data.csv')
     cols = df.columns.tolist()
@@ -1036,7 +1036,7 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
         res.append({'indicator': k, 'value': round(v, 2)})
     return res
 
-@router.post("/autogluon/test")
+@router.post("/autogluon/predict")
 def train_autogluon(username: str = Form(...)):
     df = pd.read_csv(f'./static/data/{username}/data.csv')
     cols = df.columns.tolist()
