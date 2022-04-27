@@ -9,8 +9,13 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import LabelEncoder
 
 from dowhy import CausalModel
+
+import causalnex
+from causalnex.structure.notears import from_pandas
+from causalnex.plots import plot_structure, NODE_STYLE, EDGE_STYLE
 
 import pandas as pd
 import numpy as np
@@ -50,3 +55,15 @@ async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: st
         'refute_p': refutel_3,
      }
     return response
+
+
+
+#####################################################
+## New Version
+#####################################################
+
+
+@router.post("/regression/train")
+def causalnex_notears( username: str = Form(...)):
+    # 读数据文件
+    df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
