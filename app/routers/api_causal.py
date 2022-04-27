@@ -64,6 +64,19 @@ async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: st
 
 
 @router.post("/regression/train")
-def causalnex_notears( username: str = Form(...)):
+def causalnex_notears( username: str = Form(...), bar: float = Form(...)):
     # 读数据文件
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
+    sm = from_pandas(df)
+    sm.remove_edges_below_threshold(bar) # 设置阈值
+    plot = plot_structure(
+        sm,
+        graph_attributes={"scale": "0.5"},
+        all_node_attributes=NODE_STYLE.WEAK,
+        all_edge_attributes=EDGE_STYLE.WEAK,
+    )
+    plot.draw(f"./static/data/{username}/images/causal/notears.png")
+
+
+
+
