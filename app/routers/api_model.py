@@ -1,5 +1,7 @@
 import os
 import math
+import pathlib
+
 import xgboost as xgb
 import lightgbm as lgb
 import autosklearn.regression
@@ -20,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, f1_score
-from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_recall_curve 
+from sklearn.metrics import roc_auc_score, precision_recall_curve, plot_roc_curve, precision_score, recall_score, average_precision_score, PrecisionRecallDisplay
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
@@ -1002,12 +1004,22 @@ def train_classification_model( username: str = Form(...), percent: float = Form
 
     # format function returns a string
     accuracy = format(accuracy_score(y_test, y_pred), '.2f')
+    precision = format(precision_score(y_test, y_pred), '.2f')
+    recall = format(recall_score(y_test, y_pred), '.2f')
+    auroc_score = format(roc_auc_score(y_test, y_pred), '.2f')
+    auprc_score = format(average_precision_score(y_test, y_pred), '.2f')
     f1_score_result = format(f1_score(y_test, y_pred), '.2f')
 
     res = [
-        {'indicator': '准确率', 'value': accuracy},
-        {'indicator': 'F1 score', 'value': f1_score_result}
+        {'indicator': 'accuracy', 'value': accuracy},
+        {'indicator': 'precision', 'value': precision},
+        {'indicator': 'recall', 'value': recall},
+        {'indicator': 'auroc_score', 'value': auroc_score},
+        {'indicator': 'auprc_score', 'value': auprc_score},
+        {'indicator': 'f1_score', 'value': f1_score_result},
     ]
+
+    # print(res)
     return res
 
 @router.post("/autogluon/train")
