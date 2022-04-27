@@ -909,7 +909,11 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         plt.title('Feature Importance')
         plt.savefig(f'./static/data/{username}/images/{method}/feature_importance.png')
         plt.clf()
-
+        xgb.plot_tree(model)
+        plt.gcf().set_size_inches(18.5, 10.5)
+        plt.title('XGBoost Tree')
+        plt.savefig(f'./static/data/{username}/images/{method}/xgboost_tree.png')
+        plt.clf()
     elif method == 'svm':
         model = svm.SVR()
         model.fit(x_train, y_train)
