@@ -4,6 +4,7 @@ import pathlib
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,5 +30,10 @@ async def create_upload_file(username: str, upload_file: UploadFile = File(...))
         df = pd.read_excel(file_location)
     else:
         df = pd.read_csv(file_location)
+    # 数值化
+    non_numeric_columns = df.select_dtypes(exclude=[np.number]).columns.tolist()
+    le = LabelEncoder()
+    for col in non_numeric_columns:
+        df[col] = le.fit_transform(df[col])
     pathlib.Path(f'./static/data/{username}').mkdir(parents=True, exist_ok=True)
     df.to_csv(f'./static/data/{username}/data.csv', index=False)
