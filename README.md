@@ -9,3 +9,8 @@
 5. 经过了离群值筛选 data.csv_zscore_fill_filter.csv, username/data_zscore_fill_filter.csv
 
 经过修改后，每位用户有一个文件夹，文件夹下的文件名是固定重命名的。
+
+## TODOs
+
+- [ ] notears论文引用
+- [ ] 数据预处理最前面加一步 `LabelEncoder()`
