@@ -12,5 +12,5 @@
 
 ## TODOs
 
-- [ ] notears论文引用
+- [ ] notears论文引用 https://github.com/xunzheng/notears
 - [ ] 数据预处理最前面加一步 `LabelEncoder()`
