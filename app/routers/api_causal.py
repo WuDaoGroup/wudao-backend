@@ -78,7 +78,7 @@ def causalnex_notears( username: str = Form(...), bar: float = Form(...)):
     )
     pathlib.Path(f'./static/data/{username}/images/causal').mkdir(parents=True, exist_ok=True)
     plot.draw(f"./static/data/{username}/images/causal/notears.png")
-
+    return {'message': 'success'}
 
 
 
