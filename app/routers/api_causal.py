@@ -1,4 +1,5 @@
 import os,csv,json
+import pathlib
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -75,6 +76,7 @@ def causalnex_notears( username: str = Form(...), bar: float = Form(...)):
         all_node_attributes=NODE_STYLE.WEAK,
         all_edge_attributes=EDGE_STYLE.WEAK,
     )
+    pathlib.Path(f'./static/data/{username}/images/causal').mkdir(parents=True, exist_ok=True)
     plot.draw(f"./static/data/{username}/images/causal/notears.png")
 
 
