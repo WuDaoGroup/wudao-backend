@@ -904,6 +904,12 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
         # n_estimators – Number of gradient boosted trees. Equivalent to number of boosting rounds.
         # 训练模型，对于回归模型使用r2评价指标
         model.fit(x_train, y_train, eval_metric='auc')
+        pathlib.Path(f'./static/data/{username}/images/{method}').mkdir(parents=True, exist_ok=True)
+        xgb.plot_importance(model, max_num_features=10, importance_type='gain')
+        plt.title('Feature Importance')
+        plt.savefig(f'./static/data/{username}/images/{method}/feature_importance.png')
+        plt.clf()
+
     elif method == 'svm':
         model = svm.SVR()
         model.fit(x_train, y_train)
