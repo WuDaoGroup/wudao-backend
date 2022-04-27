@@ -63,7 +63,7 @@ async def return_dimension_reduction(info: schemas.CausalInfo, data_filename: st
 #####################################################
 
 
-@router.post("/regression/train")
+@router.post("/notears")
 def causalnex_notears( username: str = Form(...), bar: float = Form(...)):
     # 读数据文件
     df = pd.read_csv(f'./static/data/{username}/data_zscore_fill_filter.csv')
