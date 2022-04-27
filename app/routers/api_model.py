@@ -1018,7 +1018,11 @@ def train_classification_model( username: str = Form(...), percent: float = Form
         {'indicator': 'auprc_score', 'value': auprc_score},
         {'indicator': 'f1_score', 'value': f1_score_result},
     ]
-
+    pathlib.Path(f'./static/data/{username}/images/{method}').mkdir(parents=True, exist_ok=True)
+    auroc_curve = plot_roc_curve(model, x_test, y_test)
+    plt.title(f"{method}_auroc_curve")
+    plt.savefig(f'./static/data/{username}/images/{method}/auroc.png')
+    plt.clf()
     # print(res)
     return res
 
