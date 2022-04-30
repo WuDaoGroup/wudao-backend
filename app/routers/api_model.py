@@ -21,7 +21,7 @@ from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, f1_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, f1_score, mean_absolute_percentage_error
 from sklearn.metrics import roc_auc_score, precision_recall_curve, plot_roc_curve, precision_score, recall_score, average_precision_score, PrecisionRecallDisplay
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import GradientBoostingRegressor
@@ -942,12 +942,14 @@ def train_regression_model( username: str = Form(...), percent: float = Form(...
     y_pred = model.predict(x_test)
 
     # format function returns a string
+    mape = format(mean_absolute_percentage_error(y_test, y_pred), '.2f')
     mae = format(mean_absolute_error(y_test, y_pred), '.2f')
     mse = format(mean_squared_error(y_test, y_pred), '.2f')
     rmse = format(math.sqrt(float(mse)), '.2f')
     r2 = format(r2_score(y_test, y_pred), '.2f')
 
     res = [
+        {'indicator': 'MAPE', 'value': mape},
         {'indicator': 'MAE', 'value': mae},
         {'indicator': 'MSE', 'value': mse},
         {'indicator': 'RMSE', 'value': rmse},
