@@ -1,5 +1,5 @@
 # https://auto.gluon.ai/stable/install.html
-autogluon
+autogluon # may require install torch
 
 fastapi[all]
 sqlalchemy
