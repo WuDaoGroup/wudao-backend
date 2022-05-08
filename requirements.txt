@@ -12,8 +12,6 @@ seaborn
 xgboost
 
 dowhy
-openpyxl
-
 torch
 lightgbm
 catboost
