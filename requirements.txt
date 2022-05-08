@@ -11,9 +11,9 @@ matplotlib
 seaborn
 xgboost
 
-dowhy
+# dowhy
 torch
-lightgbm
+# lightgbm
 catboost
 auto-sklearn
 autogluon
