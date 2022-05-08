@@ -15,8 +15,15 @@ xgboost
 torch
 # lightgbm
 catboost
+
+# https://pypi.org/project/auto-sklearn/
 auto-sklearn
+
+# https://auto.gluon.ai/stable/install.html
 autogluon
 
+# https://causalnex.readthedocs.io/en/latest/02_getting_started/02_install.html
 causalnex
+
+# apt-get install graphviz graphviz-dev
 pygraphviz
