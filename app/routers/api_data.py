@@ -3,6 +3,7 @@ import csv
 import json
 import base64
 import pathlib
+from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
 from fastapi.responses import FileResponse
@@ -266,7 +267,7 @@ async def return_data_file_info(username: str):
 
 # 将原data根据传入的feature info list，筛选出target/feature
 @router.post("/features/info")
-async def process_selected_features(info: list[schemas.FeatureInfo], username: str):
+async def process_selected_features(info: List[schemas.FeatureInfo], username: str):
     all_features = []
     df = pd.read_csv(f"./static/data/{username}/data.csv")
     features = []
