@@ -25,5 +25,5 @@ auto-sklearn
 # https://causalnex.readthedocs.io/en/latest/02_getting_started/02_install.html
 causalnex
 
-# apt-get install graphviz graphviz-dev
+# apt-get install gcc graphviz graphviz-dev
 pygraphviz
