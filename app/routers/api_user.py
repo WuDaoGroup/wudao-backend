@@ -1,3 +1,4 @@
+import hashlib
 from typing import List
 
 from fastapi import APIRouter, Depends, Form, HTTPException
@@ -36,9 +37,10 @@ def login(
     username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)
 ):
     db_user = crud.get_user_by_username(db, username=username)
+    encode_password = hashlib.sha256(password.encode("utf-8")).hexdigest()
     if db_user is None:
         raise HTTPException(status_code=250, detail="User not found")
-    if db_user.password != password:
+    if db_user.password != encode_password:
         raise HTTPException(status_code=251, detail="Password not correct")
     return db_user
 
@@ -55,6 +57,9 @@ def register(
         raise HTTPException(status_code=250, detail="User already registered")
     if password1 != password2:
         raise HTTPException(status_code=251, detail="Passwords are not the same")
-    new_user = schemas.UserCreate(username=username, password=password1, usertype=0)
+    encode_password = hashlib.sha256(password1.encode("utf-8")).hexdigest()
+    new_user = schemas.UserCreate(
+        username=username, password=encode_password, usertype=0
+    )
     crud.create_user(db, new_user)
     return new_user
