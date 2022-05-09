@@ -8,9 +8,10 @@
 4. 缺失填充后 data.csv_zscore_fill.csv, username/data_zscore_fill.csv
 5. 经过了离群值筛选 data.csv_zscore_fill_filter.csv, username/data_zscore_fill_filter.csv
 
-经过修改后，每位用户有一个文件夹，文件夹下的文件名是固定重命名的。
+## Run
 
-## TODOs
-
-- [ ] notears论文引用 https://github.com/xunzheng/notears
-- [ ] 数据预处理最前面加一步 `LabelEncoder()`
+```bash
+podman pull tualatinx/wudao-backend
+podman run -p 8123:8123 -it tualatinx/wudao-backend:latest bash
+uvicorn main:app --host=0.0.0.0 --port=${PORT:-8123} --reload --reload-include='*.py'
+```
