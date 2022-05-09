@@ -4,23 +4,8 @@ import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    File,
-    Form,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-)
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from sklearn.preprocessing import LabelEncoder
-from sqlalchemy.orm import Session
-
-from app import crud, schemas
-from app.database import SessionLocal
 
 plt.rcParams["font.sans-serif"] = ["SimHei"]  ##设置字体为 黑体
 plt.rcParams["axes.unicode_minus"] = False  ##显示符号

@@ -1,20 +1,9 @@
 from typing import List
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    File,
-    Form,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-)
+from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy.orm import Session
 
-import app.crud as crud
-import app.schemas as schemas
+from app import crud, schemas
 from app.database import SessionLocal
 
 router = APIRouter(prefix="/users")

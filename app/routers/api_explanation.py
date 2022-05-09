@@ -1,35 +1,12 @@
-import csv
-import json
-import os
 import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    File,
-    Form,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-)
-from fastapi.responses import FileResponse
-from sklearn import linear_model
+from fastapi import APIRouter, Form
 from sklearn.decomposition import PCA
-from sklearn.ensemble import AdaBoostRegressor
 from sklearn.manifold import TSNE
-from sklearn.tree import DecisionTreeRegressor
-from sqlalchemy.orm import Session
-
-from app import crud, schemas
-from app.database import SessionLocal
-
-# -*- coding: UTF-8 -*-
 
 router = APIRouter(prefix="/explanation")
 
