@@ -1,98 +1,100 @@
-import os
+import base64
 import csv
 import json
-import base64
+import os
 import pathlib
 from typing import List
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Form, File, UploadFile
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import app.schemas as schemas
-import app.crud as crud
+
+from app import crud, schemas
 from app.database import SessionLocal
+
 router = APIRouter(prefix="/data")
 null = None
 download_code = {
-        "cells": [
-            {
-                "cell_type": "code",
-                "execution_count": null,
-                "metadata": {},
-                "outputs": [],
-                "source": [
-                    "import json"
-                ]
-            },
-            {
-                "cell_type": "code",
-                "execution_count": null,
-                "metadata": {},
-                "outputs": [],
-                "source": [
-                ]
-            },
-             {
-                "cell_type": "code",
-                "execution_count": null,
-                "metadata": {},
-                "outputs": [],
-                "source": [
-                ]
-            },
-            {
-                "cell_type": "code",
-                "execution_count": null,
-                "metadata": {},
-                "outputs": [],
-                "source": [
-                ]
-            }
-        ],
-        "metadata": {
-            "language_info": {
-                "name": "python"
-            },
-            "orig_nbformat": 4
+    "cells": [
+        {
+            "cell_type": "code",
+            "execution_count": null,
+            "metadata": {},
+            "outputs": [],
+            "source": ["import json"],
         },
-        "nbformat": 4,
-        "nbformat_minor": 2
-    }
+        {
+            "cell_type": "code",
+            "execution_count": null,
+            "metadata": {},
+            "outputs": [],
+            "source": [],
+        },
+        {
+            "cell_type": "code",
+            "execution_count": null,
+            "metadata": {},
+            "outputs": [],
+            "source": [],
+        },
+        {
+            "cell_type": "code",
+            "execution_count": null,
+            "metadata": {},
+            "outputs": [],
+            "source": [],
+        },
+    ],
+    "metadata": {"language_info": {"name": "python"}, "orig_nbformat": 4},
+    "nbformat": 4,
+    "nbformat_minor": 2,
+}
+
 
 @router.get("/{data_filename}_selected_features.csv/features/info")
 async def return_data_basic_file_info(data_filename: str):
     df = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
     len_df = len(df.index)
     content = []
-    download_code['cells'][1]['source'] = []
+    download_code["cells"][1]["source"] = []
     header = [
-        {'key': 'name', 'value': 'name'},
-        {'key': 'count', 'value': 'count'},
-        {'key': 'missing_rate', 'value': 'missing_rate'},
-        {'key': 'mean', 'value': 'mean'},
-        {'key': 'max', 'value': 'max'},
-        {'key': 'min', 'value': 'min'},
-        {'key': 'std', 'value': 'std'},
-        {'key': 'median', 'value': 'median'}
+        {"key": "name", "value": "name"},
+        {"key": "count", "value": "count"},
+        {"key": "missing_rate", "value": "missing_rate"},
+        {"key": "mean", "value": "mean"},
+        {"key": "max", "value": "max"},
+        {"key": "min", "value": "min"},
+        {"key": "std", "value": "std"},
+        {"key": "median", "value": "median"},
     ]
     for idx, e in enumerate(df.columns):
         h = {}
-        h['name'] = e
-        h['count'] = int(df[e].count())
-        h['missing_rate'] = str(float((100-df[e].count()*100/len_df)))+"%"
-        h['mean'] = float(df[e].mean())
-        h['max'] = float(df[e].max())
-        h['min'] = float(df[e].min())
-        h['median'] = float(df[e].median())
-        h['std'] = float(df[e].std())
-        h['id'] = idx
+        h["name"] = e
+        h["count"] = int(df[e].count())
+        h["missing_rate"] = str(float((100 - df[e].count() * 100 / len_df))) + "%"
+        h["mean"] = float(df[e].mean())
+        h["max"] = float(df[e].max())
+        h["min"] = float(df[e].min())
+        h["median"] = float(df[e].median())
+        h["std"] = float(df[e].std())
+        h["id"] = idx
         content.append(h)
     df_score = df.copy()
-    df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
-    df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
+    df_score = (df_score - df_score.mean()) / (df_score.std() + 1e-12)
+    df_score.to_csv(f"./static/data/{data_filename}_zscore.csv", index=False)
     code_content = """
 df = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
 len_df = len(df.index)
@@ -124,12 +126,8 @@ df_score = (df_score-df_score.mean())/(df_score.std()+1e-12)
 df_score.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
 
 """
-    response = {
-        'content': content,
-        'header': header,
-        'code': code_content
-    }
-    download_code['cells'][1]['source'].append(code_content)
+    response = {"content": content, "header": header, "code": code_content}
+    download_code["cells"][1]["source"].append(code_content)
     return response
 
 
@@ -149,12 +147,14 @@ df_score = df.copy()"""
             origin_mean = float(df[e].mean())
             origin_std = float(df[e].std())
             origin_median = float(df[e].median())
-            fill_median = (origin_median - origin_mean)/(origin_std+1e-12)
-            s['a'] = fill_median
+            fill_median = (origin_median - origin_mean) / (origin_std + 1e-12)
+            s["a"] = fill_median
             h.append(s)
         for idx, e in enumerate(df_score.columns):
-            df_score[e].fillna(value=float(h[idx]['a']), inplace=True)
-        code = code + """h = []
+            df_score[e].fillna(value=float(h[idx]["a"]), inplace=True)
+        code = (
+            code
+            + """h = []
 for idx, e in enumerate(df.columns):
     s={}
     origin_mean = float(df[e].mean())
@@ -167,21 +167,21 @@ for idx, e in enumerate(df_score.columns):
     df_score[e].fillna(value = float(h[idx]['a']),inplace=True)
     
     """
+        )
     else:
         raise HTTPException(status_code=240, detail="请选择")
-    df_score.to_csv(
-        f'./static/data/{data_filename}_zscore_fill.csv', index=False)
+    df_score.to_csv(f"./static/data/{data_filename}_zscore_fill.csv", index=False)
     res = df_score.to_json(orient="records")
     parsed = json.loads(res)
-    code = code + """df_score.to_csv(f'./static/data/{data_filename}_zscore_fill.csv', index=False)
+    code = (
+        code
+        + """df_score.to_csv(f'./static/data/{data_filename}_zscore_fill.csv', index=False)
 res = df_score.to_json(orient="records")
 parsed = json.loads(res)
     """
-    download_code['cells'][2]['source'].append(code)
-    response = {
-        'content': parsed,
-        'code': code
-    }
+    )
+    download_code["cells"][2]["source"].append(code)
+    response = {"content": parsed, "code": code}
     return response
 
 
@@ -190,28 +190,29 @@ async def features_filter(data_filename: str, bar: float):
     df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
     for f in df.columns:
         df = df[abs(df[f]) < bar]
-    df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
-    df_score = pd.read_csv(f'./static/data/{data_filename}_zscore.csv')
-    df_origin = pd.read_csv(
-        f"./static/data/{data_filename}_selected_features.csv")
-    df_score = df_score*(df_origin.std()+1e-12)+df_origin.mean()
+    df.to_csv(f"./static/data/{data_filename}_zscore.csv", index=False)
+    df_score = pd.read_csv(f"./static/data/{data_filename}_zscore.csv")
+    df_origin = pd.read_csv(f"./static/data/{data_filename}_selected_features.csv")
+    df_score = df_score * (df_origin.std() + 1e-12) + df_origin.mean()
     df_score.to_csv(
-        f'./static/data/{data_filename}_zscore_fill_filter.csv', index=False)
+        f"./static/data/{data_filename}_zscore_fill_filter.csv", index=False
+    )
     # print (df_score)
     headers = []
     for idx, e in enumerate(df_score.columns):
         headers.append(e)
     print(headers)
-    h_features = ['mean', 'max', 'min', 'median', 'std']
+    h_features = ["mean", "max", "min", "median", "std"]
     num = 1
     for header in headers:
         plt.figure(figsize=(10, 6))
         plt.title(header, fontsize=18)
-        plt.hist(df_score[header], bins=10, edgecolor='k', alpha=0.5)
+        plt.hist(df_score[header], bins=10, edgecolor="k", alpha=0.5)
         plt.savefig(
-            f'./static/images/{data_filename}_selected_features_zscore_{num}.png')
+            f"./static/images/{data_filename}_selected_features_zscore_{num}.png"
+        )
         num += 1
-    code= """df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
+    code = """df = pd.read_csv(f"./static/data/{data_filename}_zscore_fill.csv")
 for f in df.columns:
     df = df[abs(df[f])<bar]
 df.to_csv(f'./static/data/{data_filename}_zscore.csv', index=False)
@@ -230,12 +231,9 @@ for header in headers:
     plt.hist(df_score[header],bins=10,edgecolor='k',alpha=0.5)
     plt.savefig(f'./static/images/{data_filename}_selected_features_zscore_{num}.png')
     num += 1"""
-    response = {
-        'content': df_score,
-        'code': code
-    }
-    download_code['cells'][3]['source'].append(code)
-    with open(f'./static/data/{data_filename}_download_code.ipynb', "w") as outfile:
+    response = {"content": df_score, "code": code}
+    download_code["cells"][3]["source"].append(code)
+    with open(f"./static/data/{data_filename}_download_code.ipynb", "w") as outfile:
         json.dump(download_code, outfile)
     return response
 
@@ -251,19 +249,20 @@ async def return_data_file_info(username: str):
     res = df.to_json(orient="records")
     parsed = json.loads(res)
     for idx, p in enumerate(parsed):
-        p['id'] = idx
+        p["id"] = idx
     # print(parsed)
     header = []
     for idx, e in enumerate(df.columns):
         h = {}
-        h['key'] = e
-        h['value'] = e
+        h["key"] = e
+        h["value"] = e
         header.append(h)
-    response={
-        'header': header,
-        'content': parsed,
+    response = {
+        "header": header,
+        "content": parsed,
     }
     return response
+
 
 # 将原data根据传入的feature info list，筛选出target/feature
 @router.post("/features/info")
@@ -272,97 +271,101 @@ async def process_selected_features(info: List[schemas.FeatureInfo], username: s
     df = pd.read_csv(f"./static/data/{username}/data.csv")
     features = []
     for i in info:
-        if i.type=="target":
+        if i.type == "target":
             all_features.append(i)
             features.append(i.value)
             break
     for i in info:
-        if i.type=="feature":
+        if i.type == "feature":
             all_features.append(i)
             features.append(i.value)
     df = df[features]
-    df.to_csv(f'./static/data/{username}/data_target_confirmed.csv', index=False)
-    response={
-        'target': features[0],
-        'features': features[1:],
-        'all_features': all_features
+    df.to_csv(f"./static/data/{username}/data_target_confirmed.csv", index=False)
+    response = {
+        "target": features[0],
+        "features": features[1:],
+        "all_features": all_features,
     }
     return response
+
 
 @router.post("/statistics/info")
 def show_data_statistics_info(username: str = Form(...), step: str = Form(...)):
     df = pd.read_csv(f"./static/data/{username}/{step}.csv")
     len_df = len(df.index)
     header = [
-        {'key': 'name', 'value': 'name'},
-        {'key': 'count', 'value': 'count'},
-        {'key': 'missing', 'value': 'missing'},
-        {'key': 'min', 'value': 'min'},
-        {'key': 'max', 'value': 'max'},
-        {'key': 'mean', 'value': 'mean'},
-        {'key': 'std', 'value': 'std'},
-        {'key': 'median', 'value': 'median'}
+        {"key": "name", "value": "name"},
+        {"key": "count", "value": "count"},
+        {"key": "missing", "value": "missing"},
+        {"key": "min", "value": "min"},
+        {"key": "max", "value": "max"},
+        {"key": "mean", "value": "mean"},
+        {"key": "std", "value": "std"},
+        {"key": "median", "value": "median"},
     ]
     statistic_info = []
     for idx, e in enumerate(df.columns):
         h = {}
-        h['id'] = idx
-        h['name'] = e
-        h['count'] = int(df[e].count())
-        h['missing'] = str(round(float((100-df[e].count()*100/len_df)),2))+"%"
-        h['mean'] = round(float(df[e].mean()), 2)
-        h['max'] = round(float(df[e].max()),2)
-        h['min'] = round(float(df[e].min()),2)
-        h['median'] = round(float(df[e].median()),2)
-        h['std'] = round(float(df[e].std()),2)
+        h["id"] = idx
+        h["name"] = e
+        h["count"] = int(df[e].count())
+        h["missing"] = str(round(float((100 - df[e].count() * 100 / len_df)), 2)) + "%"
+        h["mean"] = round(float(df[e].mean()), 2)
+        h["max"] = round(float(df[e].max()), 2)
+        h["min"] = round(float(df[e].min()), 2)
+        h["median"] = round(float(df[e].median()), 2)
+        h["std"] = round(float(df[e].std()), 2)
         statistic_info.append(h)
-    
-    response={
-        'header': header,
-        'content': statistic_info,
+
+    response = {
+        "header": header,
+        "content": statistic_info,
     }
     return response
+
 
 @router.get("/zscore")
 def zscore_data(username: str):
     df = pd.read_csv(f"./static/data/{username}/data_target_confirmed.csv")
     # 第一列是预测目标y，跳过，不能被标准化
     df_features = df.iloc[:, 1:]
-    df_features = df_features.apply(lambda x: (x - x.mean()) / (x.std()+1e-12))
-    df = pd.concat([df.iloc[:,0], df_features], axis=1)
-    df.to_csv(f'./static/data/{username}/data_zscore.csv', index=False)
-    res = {'message': 'success'}
+    df_features = df_features.apply(lambda x: (x - x.mean()) / (x.std() + 1e-12))
+    df = pd.concat([df.iloc[:, 0], df_features], axis=1)
+    df.to_csv(f"./static/data/{username}/data_zscore.csv", index=False)
+    res = {"message": "success"}
     return res
+
 
 @router.get("/fill")
 def fill_data(username: str, fill_type: str):
     df = pd.read_csv(f"./static/data/{username}/data_zscore.csv")
-    if fill_type == '均值填充':
+    if fill_type == "均值填充":
         # 因为已经zscore好了，所以只需补0即可，0即为均值
         df.fillna(value=0, inplace=True)
-    elif fill_type == '中位数填充':
+    elif fill_type == "中位数填充":
         # 先计算出原始feature的中位数
         info = []
         for _, e in enumerate(df.columns):
             h = {}
-            h['name'] = e
-            h['median'] = float(df[e].median())
+            h["name"] = e
+            h["median"] = float(df[e].median())
             info.append(h)
         print(info)
         for idx, e in enumerate(df.columns):
-            df[e].fillna(value=info[idx]['median'], inplace=True)
-    df.to_csv(f'./static/data/{username}/data_zscore_fill.csv', index=False)
-    res = {'message': 'success'}
+            df[e].fillna(value=info[idx]["median"], inplace=True)
+    df.to_csv(f"./static/data/{username}/data_zscore_fill.csv", index=False)
+    res = {"message": "success"}
     return res
+
 
 @router.get("/filter")
 def filter_data(username: str, bar: float):
     df = pd.read_csv(f"./static/data/{username}/data_zscore_fill.csv")
     # 除第一列外，如果该行存在大于bar的值，则删除该行
-    for f in df.iloc[:,1:].columns:
+    for f in df.iloc[:, 1:].columns:
         df = df[abs(df[f]) < bar]
-    df.to_csv(f'./static/data/{username}/data_zscore_fill_filter.csv', index=False)
-    res = {'message': 'success'}
+    df.to_csv(f"./static/data/{username}/data_zscore_fill_filter.csv", index=False)
+    res = {"message": "success"}
     return res
 
 
@@ -370,13 +373,15 @@ def filter_data(username: str, bar: float):
 def generate_histogram(username: str = Form(...), step: str = Form(...)):
     df = pd.read_csv(f"./static/data/{username}/{step}.csv")
     for _, f in enumerate(df.columns):
-        plt.figure(figsize=(10,6))
-        plt.title(f,fontsize=18)
+        plt.figure(figsize=(10, 6))
+        plt.title(f, fontsize=18)
         # plt.hist(df[f],bins=20,edgecolor='k',alpha=0.5)
         # plt.xticks(rotation=90)
         sns.histplot(data=df[f], color="dodgerblue")
-        pathlib.Path(f'./static/data/{username}/images/{step}').mkdir(parents=True, exist_ok=True)
-        plt.savefig(f'./static/data/{username}/images/{step}/histogram_{f}.png')
+        pathlib.Path(f"./static/data/{username}/images/{step}").mkdir(
+            parents=True, exist_ok=True
+        )
+        plt.savefig(f"./static/data/{username}/images/{step}/histogram_{f}.png")
         plt.clf()
-    res = {'message': 'success'}
+    res = {"message": "success"}
     return res

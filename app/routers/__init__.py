@@ -1,7 +1,15 @@
-from app.routers import api_causal, api_user, api_file, api_data, api_model, api_explanation
+from app.routers import (
+    api_causal,
+    api_data,
+    api_explanation,
+    api_file,
+    api_model,
+    api_user,
+)
+
+prefix = "/api/v1"
 
 
-prefix = '/api/v1'
 def init_routers(app):
     app.include_router(api_user.router, prefix=prefix, tags=["用户管理"])
     app.include_router(api_file.router, prefix=prefix, tags=["文件处理"])

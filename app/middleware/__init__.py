@@ -1,8 +1,6 @@
 from fastapi.middleware.cors import CORSMiddleware
 
-origins = [
-    "*"
-]
+origins = ["*"]
 
 
 def init_middleware(app):
