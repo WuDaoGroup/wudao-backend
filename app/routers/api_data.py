@@ -144,8 +144,6 @@ def generate_histogram(username: str = Form(...), step: str = Form(...)):
     for _, f in enumerate(df.columns):
         plt.figure(figsize=(10, 6))
         plt.title(f, fontsize=18)
-        # plt.hist(df[f],bins=20,edgecolor='k',alpha=0.5)
-        # plt.xticks(rotation=90)
         sns.histplot(data=df[f], color="dodgerblue")
         pathlib.Path(f"./static/data/{username}/images/{step}").mkdir(
             parents=True, exist_ok=True

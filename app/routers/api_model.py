@@ -227,8 +227,8 @@ def train_autogluon(username: str = Form(...), percent: float = Form(...)):
 
     # test
     y_test = test_data[label]
-    test_data_nolab = test_data.drop(columns=[label])
-    y_pred = predictor.predict(test_data_nolab)
+    test_data_no_label = test_data.drop(columns=[label])
+    y_pred = predictor.predict(test_data_no_label)
 
     # save evaluation scores
     perf = predictor.evaluate_predictions(
