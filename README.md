@@ -52,7 +52,7 @@ uvicorn main:app --host=0.0.0.0 --port=${PORT:-8123} --reload --reload-include='
 
 ## License
 
-[MIT © Richard McRichface.](../LICENSE)
+[GPL-2.0 license](./LICENSE)
 
 
 
